@@ -1,0 +1,3595 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Mapa de Rodaje del Laboratorio de Creadores Digitales — Centro de Interés, Colegio San José de Guanentá. Aprende fotografía, audio y edición narrativa a través de retos interactivos.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%230a0a0c'/%3E%3Cpath d='M3 10.5 20.5 7l.9 4.4L3.9 15Z' fill='%231fe7d1'/%3E%3Cpath d='M3 10.5 20 4l.5 2.4-17 3.6Z' fill='%23ff7a45' opacity='.75'/%3E%3Crect x='3' y='11' width='18' height='9' rx='1.4' fill='%231fe7d1'/%3E%3C/svg%3E">
+<title>Mapa de Rodaje — Digital Creators Lab</title>
+<style>
+  :root{
+    --bg:#0a0a0c;
+    --bg-soft:#111114;
+    --surface:#16161a;
+    --surface-2:#1b1b20;
+    --border:rgba(255,255,255,.08);
+    --text:#f2f2f0;
+    --text-dim:#9a9aa2;
+    --teal:#1fe7d1;
+    --orange:#ff7a45;
+    --green:#2ecc71;
+    --gold:#f5c451;
+    --red:#ff5470;
+    --locked:#55555c;
+    --radius:14px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 1200px 600px at 50% -10%, #1a1a20 0%, var(--bg) 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4,p,ul{margin:0;}
+  button{font-family:inherit;}
+
+  /* subtle film-grain texture, pure CSS, no images */
+  .grain{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(rgba(255,255,255,.5) 1px, transparent 1px);
+    background-size:3px 3px;
+    opacity:.02;
+  }
+
+  /* ============ HEADER / HUD ============ */
+  /* Centered on desktop — the brand block (eyebrow/title/subtitle),
+     progress bar and certificate button all sit in the horizontal
+     middle of the page instead of hugging the left edge. Reset back to
+     left-aligned on mobile, where a stacked/centered layout reads
+     worse and the original left alignment is kept. */
+  .hud{
+    position:relative;z-index:1;
+    padding:48px 48px 20px;
+    text-align:center;
+  }
+  .hud-eyebrow{
+    display:block;text-transform:uppercase;letter-spacing:.14em;
+    font-size:.72rem;font-weight:600;color:var(--teal);
+  }
+  .hud h1{
+    font-size:clamp(2rem,4.5vw,3.1rem);
+    font-weight:800;letter-spacing:-.02em;margin:.28em 0 .32em;
+    background:linear-gradient(90deg,var(--teal),var(--orange));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hud-sub{
+    color:var(--text-dim);max-width:48ch;font-size:.95rem;line-height:1.55;
+    margin-left:auto;margin-right:auto;
+  }
+
+  /* ---- Global progress bar ---- */
+  .hud-progress{margin:26px auto 0;max-width:480px;}
+  .hud-progress-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    margin-bottom:7px;
+  }
+  .hud-progress-label{
+    font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);
+  }
+  .hud-progress-value{
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.78rem;font-weight:700;color:var(--teal);
+  }
+  .hud-progress-track{
+    height:8px;border-radius:4px;overflow:hidden;
+    background:var(--surface);border:1px solid var(--border);
+  }
+  .hud-progress-fill{
+    height:100%;width:0%;border-radius:4px;
+    background:linear-gradient(90deg,var(--teal),var(--orange));
+    box-shadow:0 0 12px -2px var(--teal);
+    transition:width .6s cubic-bezier(.22,.8,.24,1);
+  }
+
+  /* ---- Persistent "view certificate" button, shown once 100% complete ---- */
+  .hud-certificate-btn{
+    margin-top:18px;display:inline-flex;align-items:center;gap:8px;
+    background:rgba(245,196,81,.12);border:1px solid var(--gold);color:var(--gold);
+    font:inherit;font-size:.82rem;font-weight:700;
+    padding:9px 16px;border-radius:20px;cursor:pointer;
+    transition:filter .2s ease,transform .2s ease;
+  }
+  .hud-certificate-btn:hover{filter:brightness(1.15);transform:translateY(-2px);}
+  .hud-certificate-btn[hidden]{display:none;}
+
+  /* ============ ROADMAP TRACK ============ */
+  .roadmap-wrapper{position:relative;z-index:1;padding:16px 0 70px;}
+  .roadmap-wrapper::before,.roadmap-wrapper::after{
+    content:'';position:absolute;top:0;bottom:0;width:60px;pointer-events:none;z-index:2;
+  }
+  .roadmap-wrapper::before{left:0;background:linear-gradient(to right,var(--bg),transparent);}
+  .roadmap-wrapper::after{right:0;background:linear-gradient(to left,var(--bg),transparent);}
+
+  .roadmap-track{
+    display:flex;align-items:flex-start;
+    /* Centered on desktop while the phases fit the viewport (today: 4).
+       "safe center" is what makes this not break later: once the roadmap
+       grows enough phases to overflow the screen (up to 15, per the
+       scalability note above), it automatically falls back to normal
+       start-aligned scrolling instead of a plain "center" — which in
+       overflowing flex rows can make the first card unreachable by
+       scroll in some browsers. */
+    justify-content:safe center;
+    overflow-x:auto;overflow-y:visible;
+    padding:60px 48px 30px;
+    scroll-snap-type:x proximity;
+  }
+  .roadmap-track::-webkit-scrollbar{height:6px;}
+  .roadmap-track::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+  /* Each node: flexible width so the track scales to any number of phases */
+  .roadmap-node{
+    flex:0 0 252px;
+    display:flex;flex-direction:column;align-items:center;
+    scroll-snap-align:center;
+    opacity:0;transform:translateY(26px);
+    transition:opacity .6s ease,transform .6s ease;
+  }
+  .roadmap-node.is-visible{opacity:1;transform:none;}
+
+  /* the rail carries the connecting line + the keyframe marker */
+  .rail{width:100%;height:44px;position:relative;}
+  .rail::before{
+    content:'';position:absolute;top:50%;left:0;right:0;height:3px;
+    transform:translateY(-50%);border-radius:2px;
+    background:linear-gradient(90deg,var(--teal),var(--orange));opacity:.55;
+  }
+  .roadmap-node:first-child .rail::before{left:50%;}
+  .roadmap-node:last-child .rail::before{right:50%;}
+
+  .marker{
+    position:absolute;top:50%;left:50%;width:16px;height:16px;
+    background:var(--bg-soft);border:3px solid var(--accent-color,var(--teal));
+    border-radius:3px;
+    transform:translate(-50%,-50%) rotate(45deg);
+    box-shadow:0 0 0 4px var(--bg),0 0 16px -2px var(--accent-color,var(--teal));
+    transition:transform .25s ease,box-shadow .25s ease,opacity .25s ease,filter .25s ease;
+  }
+  .roadmap-node:hover .marker,.roadmap-node:focus-within .marker{
+    transform:translate(-50%,-50%) rotate(45deg) scale(1.3);
+    box-shadow:0 0 0 4px var(--bg),0 0 26px 2px var(--accent-color,var(--teal));
+  }
+  .marker.is-locked{opacity:.55;filter:grayscale(1);}
+  .roadmap-node:has(.marker.is-locked):hover .marker,
+  .roadmap-node:has(.marker.is-locked):focus-within .marker{
+    transform:translate(-50%,-50%) rotate(45deg);
+    box-shadow:0 0 0 4px var(--bg),0 0 16px -2px var(--accent-color,var(--locked));
+  }
+
+  /* card = "clip thumbnail" */
+  .card{
+    margin-top:22px;width:252px;background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;cursor:pointer;outline:none;
+    transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease,opacity .3s ease,filter .3s ease;
+  }
+  .card:hover,.card:focus-visible{
+    transform:translateY(-8px);
+    border-color:var(--accent-color,var(--teal));
+    box-shadow:0 18px 40px -18px var(--accent-color,var(--teal)),0 0 0 1px var(--accent-color,var(--teal));
+  }
+
+  /* locked state: greyed out, muted, fully inert (content AND mission).
+     Driven dynamically — see isPrerequisitePassed() in the script. */
+  .card.is-locked{
+    opacity:.5;filter:grayscale(.7);cursor:not-allowed;
+  }
+  .card.is-locked:hover,.card.is-locked:focus-visible{
+    transform:none;border-color:var(--border);box-shadow:none;
+  }
+
+  /* gated state: theory is available, but the mission itself needs ALL
+     camera-calibration tasks passed first. Card stays fully legible —
+     only the CTA area + affordance to "open the mission" changes. */
+  .card.is-gated{cursor:not-allowed;}
+  .card.is-gated:hover,.card.is-gated:focus-visible{
+    transform:none;border-color:var(--border);box-shadow:none;
+  }
+
+  .card-thumb{
+    height:88px;position:relative;display:flex;align-items:center;justify-content:center;
+  }
+  .card-thumb.accent-teal{background:linear-gradient(135deg,rgba(31,231,209,.28),rgba(8,8,10,.6));color:var(--teal);}
+  .card-thumb.accent-orange{background:linear-gradient(135deg,rgba(255,122,69,.28),rgba(8,8,10,.6));color:var(--orange);}
+  .card-thumb.accent-completed{background:linear-gradient(135deg,rgba(46,204,113,.28),rgba(8,8,10,.6));color:var(--green);}
+  .card-thumb.accent-gated{background:linear-gradient(135deg,rgba(245,196,81,.26),rgba(8,8,10,.6));color:var(--gold);}
+  .card-thumb.accent-locked{background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(8,8,10,.6));color:#75757d;}
+  .card-thumb svg{width:30px;height:30px;}
+  .thumb-code{
+    position:absolute;top:9px;left:11px;font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.64rem;letter-spacing:.08em;opacity:.9;
+  }
+  .thumb-dot{
+    position:absolute;top:12px;right:11px;width:6px;height:6px;border-radius:50%;
+    background:currentColor;box-shadow:0 0 6px currentColor;
+  }
+
+  .card-body{padding:14px 16px 16px;}
+  .card-title{font-size:1rem;font-weight:700;line-height:1.3;margin-bottom:6px;}
+  .card-teaser{
+    font-size:.82rem;color:var(--text-dim);line-height:1.45;margin-bottom:14px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+
+  /* ---- Two-CTA action row: "Ver contenido" (secundaria) + "Ver misión" (primaria) ---- */
+  .card-actions{
+    display:flex;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;gap:10px 12px;
+  }
+
+  /* Secondary action — quiet, opens the in-app Content Drawer (never leaves the page) */
+  .card-link{
+    display:inline-flex;align-items:center;gap:5px;
+    font:inherit;font-size:.73rem;font-weight:600;color:var(--text-dim);
+    background:none;border:none;margin:0;padding:0 0 2px;
+    border-bottom:1px solid transparent;white-space:nowrap;
+    cursor:pointer;
+    transition:color .2s ease,border-color .2s ease;
+  }
+  .card-link svg{width:14px;height:14px;flex:0 0 auto;}
+  .card-link:hover,.card-link:focus-visible{color:var(--text);border-color:var(--text-dim);}
+  .card-link:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* Primary action — the visually dominant "pill" that opens the mission modal */
+  .card-cta{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:.76rem;font-weight:700;white-space:nowrap;
+    padding:7px 12px;border-radius:20px;
+    transition:transform .2s ease,filter .2s ease;
+  }
+  .card-cta.accent-teal{color:var(--teal);background:rgba(31,231,209,.14);}
+  .card-cta.accent-orange{color:var(--orange);background:rgba(255,122,69,.14);}
+  .card-cta.accent-completed{color:var(--green);background:rgba(46,204,113,.14);}
+  .card-cta.accent-gated{color:var(--gold);background:rgba(245,196,81,.12);}
+  .card-cta.accent-locked{color:#75757d;background:rgba(255,255,255,.05);}
+  .card-cta .arrow{transition:transform .25s ease;}
+  .card:hover .card-cta .arrow{transform:translateX(4px);}
+  .card:hover .card-cta{filter:brightness(1.15);}
+  .card.is-locked:hover .card-cta,.card.is-gated:hover .card-cta{filter:none;}
+
+  /* ============ MISSION MODAL ============ */
+  .modal-overlay{
+    position:fixed;inset:0;z-index:50;
+    background:rgba(6,6,8,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .3s ease,visibility .3s ease;
+  }
+  .modal-overlay.is-open{opacity:1;visibility:visible;pointer-events:auto;}
+
+  .modal{
+    width:100%;max-width:480px;max-height:85vh;overflow-y:auto;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:18px;
+    padding:28px 26px 26px;position:relative;
+    transform:translateY(24px) scale(.98);opacity:0;
+    transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .35s ease;
+  }
+  .modal-overlay.is-open .modal{transform:translateY(0) scale(1);opacity:1;}
+
+  .modal-close{
+    position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;
+    border:1px solid var(--border);background:var(--surface);color:var(--text-dim);
+    font-size:.9rem;cursor:pointer;transition:.2s;
+  }
+  .modal-close:hover{color:var(--text);border-color:var(--accent-color,var(--teal));}
+
+  .modal-head{display:flex;gap:14px;align-items:center;margin-bottom:16px;padding-right:34px;}
+  .modal-icon{
+    width:44px;height:44px;flex:0 0 44px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .modal-icon svg{width:22px;height:22px;}
+  .modal-code{
+    display:block;font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.7rem;letter-spacing:.1em;color:var(--text-dim);margin-bottom:4px;
+  }
+  #modal-title{font-size:1.3rem;font-weight:700;}
+  .modal-mission{color:var(--text-dim);line-height:1.6;font-size:.92rem;margin-bottom:18px;}
+  .modal-obj-label{
+    display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--text-dim);margin-bottom:10px;
+  }
+  .modal-objectives ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+  .modal-objectives li{display:flex;gap:9px;align-items:flex-start;font-size:.88rem;line-height:1.42;}
+  .modal-objectives li::before{content:'▸';color:var(--accent-color,var(--teal));flex:0 0 auto;}
+
+  .modal-cta{
+    margin-top:22px;width:100%;padding:13px;border:none;border-radius:10px;
+    background:linear-gradient(90deg,var(--teal),var(--orange));color:#0a0a0c;
+    font-weight:700;font-size:.9rem;letter-spacing:.02em;cursor:pointer;
+    transition:filter .2s ease,transform .2s ease;
+  }
+  .modal-cta:hover{filter:brightness(1.08);transform:translateY(-2px);}
+
+  /* ============ CONTENT DRAWER — tabbed learning module system ============ */
+  /* The Content Drawer now rises from the bottom of the screen as a
+     centered "bottom sheet" card (like a mobile share sheet) instead of
+     sliding in from the right edge as a full-height side panel — same
+     overlay/backdrop mechanics, different resting position. */
+  .drawer-overlay{
+    position:fixed;inset:0;z-index:60;
+    background:rgba(4,4,6,.55);
+    opacity:0;visibility:hidden;pointer-events:none;
+    display:flex;align-items:flex-end;justify-content:center;
+    transition:opacity .35s ease,visibility .35s ease;
+  }
+  .drawer-overlay.is-open{opacity:1;visibility:visible;pointer-events:auto;}
+
+  .drawer{
+    position:relative;
+    /* Was min(86vh, 760px): on any screen taller than ~885px that 760px
+       cap kicked in before the vh limit did, leaving a big empty gap
+       between the top of the drawer and the top of the viewport while
+       .drawer-body still had to scroll internally to reach "Continuar".
+       Raised so the sheet can climb much closer to the top (almost the
+       full viewport) and use that space instead of wasting it. */
+    width:100%;max-width:720px;max-height:min(94vh, 940px);
+    background:rgba(18,18,18,.92);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--border);border-bottom:none;
+    border-radius:22px 22px 0 0;
+    box-shadow:0 -30px 80px -30px rgba(0,0,0,.7);
+    display:flex;flex-direction:column;
+    transform:translateY(100%);
+    transition:transform .4s cubic-bezier(.22,.8,.24,1);
+  }
+  .drawer-overlay.is-open .drawer{transform:translateY(0);}
+  /* Small centered grabber bar — the usual visual cue for a bottom
+     sheet, purely decorative. */
+  .drawer::before{
+    content:'';position:absolute;top:10px;left:50%;
+    width:36px;height:4px;border-radius:2px;
+    background:var(--border);transform:translateX(-50%);
+  }
+
+  .drawer-header{
+    flex:0 0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:26px 22px 20px;border-bottom:1px solid var(--border);
+  }
+  .drawer-eyebrow{
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent-color,var(--teal));
+  }
+  .drawer-close{
+    width:32px;height:32px;border-radius:50%;flex:0 0 auto;
+    border:1px solid var(--border);background:var(--surface);color:var(--text-dim);
+    font-size:.9rem;cursor:pointer;transition:.2s;
+  }
+  .drawer-close:hover{color:var(--text);border-color:var(--accent-color,var(--teal));}
+
+  /* Tab bar — sits under the header, stays put while the panel scrolls */
+  .drawer-tabs{
+    flex:0 0 auto;display:flex;gap:2px;overflow-x:auto;
+    padding:0 36px;border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,.015);
+  }
+  .drawer-tabs::-webkit-scrollbar{height:4px;}
+  .drawer-tab{
+    display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+    background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--text-dim);font:inherit;font-size:.82rem;font-weight:600;
+    padding:14px 14px 12px;cursor:pointer;
+    transition:color .2s ease,border-color .2s ease;
+  }
+  .drawer-tab:hover{color:var(--text);}
+  .drawer-tab.is-active{color:var(--accent-color,var(--teal));border-color:var(--accent-color,var(--teal));}
+  .drawer-tab .tab-check{
+    width:14px;height:14px;border-radius:50%;flex:0 0 auto;
+    background:var(--green);color:#0a0a0c;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .drawer-tab .tab-check svg{width:9px;height:9px;}
+  .drawer-tab.is-locked{color:var(--locked);}
+  .drawer-tab .tab-lock{
+    width:14px;height:14px;flex:0 0 auto;color:var(--locked);
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .drawer-tab .tab-lock svg{width:12px;height:12px;}
+
+  /* ---- Locked module screen ("vuelve la próxima semana") ---- */
+  .locked-module-screen{
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    padding:56px 20px 40px;
+  }
+  .locked-module-screen .locked-icon{
+    width:56px;height:56px;border-radius:50%;flex:0 0 auto;
+    background:rgba(255,255,255,.04);border:1px solid var(--border);
+    color:var(--locked);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:22px;
+  }
+  .locked-module-screen .locked-icon svg{width:24px;height:24px;}
+  .locked-module-screen h3{
+    font-size:1.05rem;font-weight:700;color:var(--text);
+    max-width:380px;line-height:1.5;margin:0 0 10px;
+  }
+  .locked-module-screen p{
+    font-size:.85rem;color:var(--text-dim);max-width:340px;margin:0;
+  }
+
+  /* Premium editorial feel: generous padding + smooth internal scroll */
+  .drawer-body{
+    flex:1 1 auto;overflow-y:auto;scroll-behavior:smooth;
+    padding:32px 36px 72px;
+  }
+  .drawer-body::-webkit-scrollbar{width:8px;}
+  .drawer-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+  /* Generic styling for the raw HTML injected via module.contentHTML */
+  .drawer-body h3{font-size:1.14rem;font-weight:700;color:var(--text);margin:0 0 12px;}
+  .drawer-body h3:not(:first-child){margin-top:30px;}
+  .drawer-body h4{
+    font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--text-dim);margin:26px 0 4px;
+  }
+  .drawer-body p{font-size:.93rem;line-height:1.72;color:var(--text-dim);margin:0 0 16px;}
+  .drawer-body strong{color:var(--text);}
+  .drawer-body ul,.drawer-body ol{color:var(--text-dim);font-size:.93rem;line-height:1.65;padding-left:1.2em;margin:0 0 16px;}
+  .drawer-body a{color:var(--accent-color,var(--teal));}
+
+  /* Placeholder / editorial static images inside a module */
+  .content-img{
+    display:block;width:100%;max-width:100%;height:auto;
+    border-radius:12px;border:1px solid var(--border);
+    box-shadow:0 16px 34px -18px rgba(0,0,0,.55);
+    margin:6px 0 26px;
+  }
+
+  /* ---- Native "Before / After" illustrative comparison slider (theory aid) ---- */
+  .compare-wrapper{
+    --expose:50%;
+    position:relative;width:100%;aspect-ratio:16/9;
+    overflow:hidden;border-radius:12px;
+    border:1px solid var(--border);
+    box-shadow:0 16px 34px -18px rgba(0,0,0,.55);
+    background:var(--surface);
+    margin:10px 0 20px;
+    touch-action:pan-y;
+  }
+  .compare-wrapper img{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;display:block;
+    user-select:none;-webkit-user-drag:none;pointer-events:none;
+  }
+  .img-after{z-index:1;}
+  .img-before{
+    z-index:2;
+    clip-path:polygon(0 0, var(--expose) 0, var(--expose) 100%, 0 100%);
+  }
+  .compare-divider{
+    position:absolute;top:0;bottom:0;left:var(--expose);width:2px;
+    background:rgba(255,255,255,.85);
+    box-shadow:0 0 10px rgba(0,0,0,.5);
+    transform:translateX(-50%);
+    z-index:3;pointer-events:none;
+  }
+  .compare-handle{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:32px;height:32px;border-radius:50%;
+    background:rgba(15,15,17,.92);border:2px solid #fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,.45);
+  }
+  .compare-handle svg{width:15px;height:15px;color:#fff;}
+  .compare-label{
+    position:absolute;top:10px;z-index:4;pointer-events:none;
+    background:rgba(0,0,0,.55);color:#fff;
+    font-size:.66rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:5px 10px;border-radius:20px;
+  }
+  .compare-label-before{left:10px;}
+  .compare-label-after{right:10px;}
+  .compare-slider{
+    position:absolute;inset:0;width:100%;height:100%;margin:0;
+    opacity:0;cursor:ew-resize;z-index:5;
+    -webkit-appearance:none;appearance:none;background:transparent;
+  }
+
+  /* Smooth transition every time a tab is switched or the panel state
+     toggles: these wrapper elements are freshly (re)created each
+     render, so the fade-in animation restarts automatically. */
+  .module-theory,.quiz-box{animation:panel-fade .3s ease;}
+  @keyframes panel-fade{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* Primary gradient CTA — used for both "Realizar Prueba de Cámara"
+     (start) and "Confirmar Calibración" (submit) buttons. */
+  .module-task-start{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;margin-top:10px;padding:14px 18px;border:none;border-radius:12px;
+    background:linear-gradient(90deg,var(--teal),var(--orange));color:#0a0a0c;
+    font-weight:700;font-size:.92rem;cursor:pointer;
+    transition:filter .2s ease,transform .2s ease;
+  }
+  .module-task-start:hover{filter:brightness(1.08);transform:translateY(-2px);}
+  .module-task-start:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none;}
+  .module-task-start svg{width:16px;height:16px;flex:0 0 auto;}
+
+  .quiz-back-link{
+    display:inline-flex;align-items:center;gap:4px;
+    background:none;border:none;color:var(--text-dim);
+    font:inherit;font-size:.78rem;font-weight:600;cursor:pointer;
+    margin-bottom:16px;padding:0;
+    transition:color .2s ease;
+  }
+  .quiz-back-link:hover{color:var(--text);}
+
+  .quiz-box{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:20px 20px 22px;
+  }
+  /* Step counter for the paginated theory "cards" (module.theorySteps) —
+     same look as .quiz-box .quiz-progress below, just usable outside a
+     .quiz-box since the theory panel isn't one. */
+  .theory-progress{
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);margin-bottom:14px;
+  }
+  .quiz-box .quiz-progress{
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--text-dim);margin-bottom:10px;
+  }
+  .quiz-box .quiz-question{
+    font-size:1rem;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:16px;
+  }
+
+  /* ---- Selectable option buttons — shared by the Prueba de Audio
+     (multiple choice) and reused for anything else option-based ---- */
+  .quiz-options{display:flex;flex-direction:column;gap:10px;}
+  .quiz-option{
+    display:block;width:100%;text-align:left;
+    background:var(--bg-soft);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);font:inherit;font-size:.87rem;line-height:1.4;
+    padding:12px 14px;cursor:pointer;
+    transition:border-color .2s ease,background .2s ease,transform .15s ease,color .2s ease,opacity .2s ease;
+  }
+  .quiz-option:hover:not(:disabled){border-color:var(--accent-color,var(--teal));transform:translateX(3px);}
+  .quiz-option:disabled{cursor:not-allowed;}
+  .quiz-option.is-correct{background:rgba(46,204,113,.15);border-color:var(--green);color:var(--green);font-weight:600;}
+  .quiz-option.is-wrong{background:rgba(255,84,112,.12);border-color:var(--red);color:var(--red);opacity:.7;}
+  .quiz-option.is-shake{animation:quiz-shake .4s ease;}
+
+  /* Native <audio> player used by the Prueba de Audio — kept close to
+     the app's dark surfaces even though browsers can't fully restyle
+     native controls. */
+  .audio-player{border-radius:10px;background:var(--bg-soft);}
+
+  /* Scenario callout used by the Reto de Guion (text-based) task —
+     the written equivalent of the audio player / image preview above
+     the options in the other two mini-games. */
+  .text-scenario{
+    background:var(--bg-soft);border:1px solid var(--border);
+    border-left:3px solid var(--accent-color,var(--teal));border-radius:8px;
+    padding:12px 14px;margin:0 0 16px;
+    font-size:.88rem;font-style:italic;color:var(--text-dim);line-height:1.55;
+  }
+
+  /* ---- "Prueba de Cámara" — interactive calibration exercise ---- */
+  .calibration-preview{
+    position:relative;width:100%;aspect-ratio:16/9;
+    overflow:hidden;border-radius:10px;margin-bottom:16px;
+    border:1px solid var(--border);background:var(--bg-soft);
+  }
+  .calibration-preview img{
+    display:block;width:100%;height:100%;object-fit:cover;
+    transition:filter .05s linear;
+  }
+  .calibration-preview.is-shake{animation:quiz-shake .4s ease;}
+
+  /* ---- "Prueba de Ajuste" digital readout — used instead of a photo
+     for calibrationTasks that budget an abstract quantity (seconds, a
+     position %, a word count, FPS...) rather than a visual filter (see
+     isAdjustmentTask in the script). Deliberately local/CSS-only: the
+     earlier version pointed these at placehold.co, which broke the
+     exercise the moment there was no internet in the classroom. */
+  .calibration-readout{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    background:
+      radial-gradient(ellipse 140% 100% at 50% -10%, rgba(31,231,209,.12), transparent 60%),
+      var(--bg-soft);
+  }
+  .calibration-readout-icon{color:var(--accent-color,var(--teal));opacity:.85;}
+  .calibration-readout-icon svg{width:34px;height:34px;}
+  .calibration-readout-value{
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:clamp(2rem,7vw,2.6rem);font-weight:700;color:var(--text);
+    letter-spacing:-.02em;
+  }
+
+  .calibration-slider-row{display:flex;align-items:center;gap:12px;margin:4px 0 18px;}
+  .calibration-value{
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.78rem;color:var(--text-dim);min-width:42px;text-align:right;flex:0 0 auto;
+  }
+  .calibration-slider{
+    flex:1;margin:0;height:6px;border-radius:3px;
+    -webkit-appearance:none;appearance:none;
+    background:linear-gradient(90deg, var(--border), var(--accent-color,var(--teal)));
+    outline:none;cursor:pointer;
+  }
+  .calibration-slider::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:20px;height:20px;border-radius:50%;
+    background:#fff;border:3px solid var(--accent-color,var(--teal));
+    box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;
+  }
+  .calibration-slider::-moz-range-track{height:6px;border-radius:3px;background:var(--border);}
+  .calibration-slider::-moz-range-thumb{
+    width:20px;height:20px;border-radius:50%;border:3px solid var(--accent-color,var(--teal));
+    background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;
+  }
+
+  /* ---- "Reto de Orden" — horizontal, scrollable video-editor
+     timeline (CapCut/Premiere style). Each order task item renders as
+     a "clip" block; Left/Right buttons nudge a clip along the track
+     using previousElementSibling/nextElementSibling, same swap trick
+     as before, just along the horizontal axis. ---- */
+  .timeline-wrapper{
+    position:relative;margin:4px 0 18px;
+    border:1px solid var(--border);border-radius:12px;
+    background:var(--bg-soft);padding:14px 0 10px;
+    overflow:hidden;
+  }
+  .timeline-wrapper::before,.timeline-wrapper::after{
+    content:'';position:absolute;top:14px;bottom:20px;width:22px;
+    pointer-events:none;z-index:2;
+  }
+  .timeline-wrapper::before{left:0;background:linear-gradient(to right,var(--bg-soft),transparent);}
+  .timeline-wrapper::after{right:0;background:linear-gradient(to left,var(--bg-soft),transparent);}
+
+  .timeline-track{
+    list-style:none;display:flex;gap:10px;margin:0;
+    padding:0 14px 10px;overflow-x:auto;
+    scroll-snap-type:x proximity;
+  }
+  .timeline-track::-webkit-scrollbar{height:6px;}
+  .timeline-track::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+  .timeline-track.is-shake{animation:quiz-shake .4s ease;}
+
+  .timeline-clip{
+    flex:0 0 158px;scroll-snap-align:start;
+    display:flex;flex-direction:column;overflow:hidden;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  }
+  .timeline-clip-thumb{
+    height:40px;flex:0 0 auto;position:relative;
+    display:flex;align-items:center;justify-content:center;color:var(--text-dim);
+    background-image:repeating-linear-gradient(90deg,
+      rgba(31,231,209,.16) 0 10px, rgba(255,122,69,.13) 10px 20px);
+  }
+  .timeline-clip-thumb svg{width:16px;height:16px;}
+  .timeline-clip-label{
+    flex:1;padding:8px 10px;font-size:.78rem;line-height:1.35;color:var(--text);
+    min-height:38px;
+  }
+  .timeline-clip-controls{display:flex;border-top:1px solid var(--border);}
+  .timeline-clip-controls .order-btn{
+    flex:1;border-radius:0;border:none;border-right:1px solid var(--border);
+    height:32px;background:var(--bg-soft);color:var(--text-dim);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:color .2s ease,background .2s ease;
+  }
+  .timeline-clip-controls .order-btn:last-child{border-right:none;}
+  .timeline-clip-controls .order-btn svg{width:13px;height:13px;}
+  .timeline-clip-controls .order-btn:hover:not(:disabled){color:var(--text);background:var(--surface);}
+  .timeline-clip-controls .order-btn:disabled{opacity:.3;cursor:not-allowed;}
+
+  @keyframes quiz-shake{
+    10%,90%{transform:translateX(-1px);}
+    20%,80%{transform:translateX(2px);}
+    30%,50%,70%{transform:translateX(-5px);}
+    40%,60%{transform:translateX(5px);}
+  }
+
+  .quiz-box .quiz-feedback{
+    margin:16px 0 0;padding:12px 14px;border-radius:10px;border-left:3px solid var(--border);
+    font-size:.85rem;line-height:1.55;color:var(--text-dim);
+  }
+  .quiz-box .quiz-feedback.is-right{border-color:var(--green);background:rgba(46,204,113,.08);}
+  .quiz-box .quiz-feedback.is-wrong{border-color:var(--red);background:rgba(255,84,112,.08);}
+
+  .quiz-next{
+    display:inline-flex;align-items:center;gap:6px;margin-top:18px;
+    background:linear-gradient(90deg,var(--teal),var(--orange));color:#0a0a0c;
+    border:none;border-radius:10px;padding:11px 16px;
+    font-weight:700;font-size:.85rem;cursor:pointer;
+    transition:filter .2s ease,transform .2s ease;
+  }
+  .quiz-next:hover{filter:brightness(1.08);transform:translateY(-2px);}
+
+  .quiz-box.quiz-passed{display:flex;align-items:center;gap:14px;background:rgba(46,204,113,.08);border-color:var(--green);}
+  .quiz-passed-icon{
+    width:36px;height:36px;border-radius:50%;flex:0 0 auto;
+    background:rgba(46,204,113,.18);color:var(--green);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .quiz-passed-icon svg{width:18px;height:18px;}
+  .quiz-box.quiz-passed strong{display:block;color:var(--text);margin-bottom:2px;font-size:.95rem;}
+  .quiz-box.quiz-passed .quiz-passed-msg{font-size:.84rem;color:var(--text-dim);}
+
+  /* ============ ONBOARDING — pantalla de bienvenida ============ */
+  .onboarding-overlay{
+    position:fixed;inset:0;z-index:100; /* highest in the app: nothing else can be open before this is resolved */
+    background:
+      radial-gradient(ellipse 1000px 560px at 50% -8%, #1c1c22 0%, var(--bg) 62%),
+      var(--bg);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .5s ease,visibility .5s ease;
+  }
+  .onboarding-overlay.is-open{opacity:1;visibility:visible;pointer-events:auto;}
+
+  .onboarding-card{
+    position:relative;z-index:1;width:100%;max-width:440px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:20px;
+    padding:36px 32px 32px;text-align:center;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.6);
+    transform:translateY(0);
+    animation:onboarding-rise .6s cubic-bezier(.22,.8,.24,1);
+  }
+  @keyframes onboarding-rise{
+    from{opacity:0;transform:translateY(18px) scale(.98);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  .onboarding-card.is-shake{animation:quiz-shake .4s ease;}
+
+  .onboarding-eyebrow{
+    display:block;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--teal);margin-bottom:14px;
+  }
+  .onboarding-title{
+    font-size:clamp(1.5rem,4.5vw,2rem);font-weight:800;letter-spacing:-.02em;
+    margin:0 0 8px;line-height:1.2;
+    background:linear-gradient(90deg,var(--teal),var(--orange));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .onboarding-subtitle{font-size:.9rem;color:var(--text-dim);margin-bottom:16px;}
+  .onboarding-desc{font-size:.86rem;line-height:1.55;color:var(--text-dim);margin-bottom:24px;}
+
+  .onboarding-field{text-align:left;margin-bottom:14px;}
+  .onboarding-field label{
+    display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--text-dim);margin-bottom:6px;
+  }
+  .onboarding-field input{
+    width:100%;padding:12px 14px;border-radius:10px;
+    background:var(--bg-soft);border:1px solid var(--border);color:var(--text);
+    font:inherit;font-size:.92rem;outline:none;
+    transition:border-color .2s ease,box-shadow .2s ease;
+  }
+  .onboarding-field input::placeholder{color:var(--text-dim);opacity:.6;}
+  .onboarding-field input:focus{
+    border-color:var(--teal);box-shadow:0 0 0 3px rgba(31,231,209,.15);
+  }
+
+  .onboarding-start{
+    width:100%;margin-top:8px;padding:14px 18px;border:none;border-radius:12px;
+    background:linear-gradient(90deg,var(--teal),var(--orange));color:#0a0a0c;
+    font-weight:700;font-size:.94rem;cursor:pointer;
+    transition:filter .2s ease,transform .2s ease;
+  }
+  .onboarding-start:hover{filter:brightness(1.08);transform:translateY(-2px);}
+
+  /* ============ VICTORIA — pantalla de graduación / certificado ============ */
+  .victory-overlay{
+    position:fixed;inset:0;z-index:90;
+    background:rgba(4,4,6,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .4s ease,visibility .4s ease;
+  }
+  .victory-overlay.is-open{opacity:1;visibility:visible;pointer-events:auto;}
+
+  .victory-card{
+    width:100%;max-width:480px;max-height:88vh;overflow-y:auto;
+    background:#ffffff;color:var(--bg);
+    border:1px solid var(--gold);border-radius:20px;
+    padding:40px 32px 32px;text-align:center;position:relative;
+    box-shadow:0 0 0 1px rgba(245,196,81,.2),0 30px 90px -20px rgba(0,0,0,.7);
+    transform:translateY(20px) scale(.97);opacity:0;
+    transition:transform .4s cubic-bezier(.22,.8,.24,1),opacity .4s ease;
+  }
+  .victory-overlay.is-open .victory-card{transform:translateY(0) scale(1);opacity:1;}
+
+  .victory-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:56px;height:56px;border-radius:50%;font-size:1.6rem;
+    background:rgba(245,196,81,.14);border:1px solid var(--gold);
+    margin-bottom:16px;
+  }
+  .victory-eyebrow{
+    display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:10px;
+  }
+  /* .victory-course (<h1>) — the program name, now the dominant heading */
+  .victory-course{
+    font-size:clamp(1.4rem, 4vw, 1.8rem);font-weight:800;color:#0a0a0c;
+    margin:0 0 6px;line-height:1.2;
+  }
+  /* .victory-title (<h2>) — the institution name, now a smaller accent
+     line beneath the program name; keeps its gold/orange gradient so
+     the certificate still reads as unmistakably "this app" even on a
+     white background. */
+  .victory-title{
+    font-size:1.2rem;font-weight:700;letter-spacing:-.01em;
+    margin:0 0 18px;
+    background:linear-gradient(90deg,var(--gold),var(--orange));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .victory-declare,.victory-declare2{font-size:.86rem;color:#333333;margin:0 0 4px;}
+  .victory-name{font-size:1.3rem;font-weight:700;color:#0a0a0c;margin:0 0 2px;}
+  .victory-username{
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    font-size:.85rem;color:var(--teal);margin:0 0 18px;
+  }
+  .victory-role{
+    font-size:1.05rem;font-weight:700;color:var(--gold);margin:6px 0 14px;
+    letter-spacing:.02em;
+  }
+  .victory-date{font-size:.78rem;color:#333333;margin:0 0 18px;}
+  .victory-signature{
+    font-size:.78rem;color:#333333;font-style:italic;
+    padding-top:16px;border-top:1px solid #dcdcdc;margin-bottom:22px;
+  }
+  .victory-actions{display:flex;flex-direction:column;gap:10px;}
+  .victory-print{
+    padding:14px 18px;border:none;border-radius:12px;
+    background:linear-gradient(90deg,var(--gold),var(--orange));color:#0a0a0c;
+    font-weight:700;font-size:.92rem;cursor:pointer;
+    transition:filter .2s ease,transform .2s ease;
+  }
+  .victory-print:hover{filter:brightness(1.08);transform:translateY(-2px);}
+  .victory-close{
+    padding:11px 18px;border-radius:12px;border:1px solid #cccccc;
+    background:transparent;color:#333333;font:inherit;font-size:.85rem;cursor:pointer;
+    transition:color .2s ease,border-color .2s ease,background .2s ease;
+  }
+  .victory-close:hover{background:#f5f5f5;color:#000000;border-color:#cccccc;}
+
+  /* Print only the certificate — everything else is hidden, and the
+     card is restyled as a clean, light, diploma-style document. The
+     :has() scoping means printing the page normally (Ctrl+P without
+     ever opening the certificate) behaves like a normal print, not an
+     unexpected certificate printout. */
+  @media print{
+    /* Force a horizontal (landscape) page with generous margins — this
+       is what makes the certificate print like a real diploma instead
+       of a portrait web-page screenshot. */
+    @page{ size: A4 landscape; margin: 15mm; }
+
+    body:has(#victory-overlay.is-open) > *:not(.victory-overlay){display:none !important;}
+
+    body:has(#victory-overlay.is-open) .victory-overlay{
+      position:static;inset:auto;background:#fff !important;padding:0;
+      opacity:1;visibility:visible;
+      display:flex;align-items:center;justify-content:center;
+      min-height:0;
+    }
+
+    /* The card itself becomes the page: centered both ways via flex,
+       sized to fill the landscape printable area, framed with a
+       classic engraved-look double border (a solid rule + a white gap
+       + a second solid rule, via layered inset box-shadows). */
+    body:has(#victory-overlay.is-open) .victory-card{
+      width:100%;max-width:267mm;min-height:170mm;max-height:none;overflow:visible;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:#fff;color:#111;border-radius:0;
+      border:2px solid #1a1a1a;
+      box-shadow:inset 0 0 0 6px #fff, inset 0 0 0 9px #1a1a1a;
+      padding:16mm 26mm;margin:0 auto;
+      font-family:Georgia,'Times New Roman',serif;
+      transform:none;opacity:1;
+      page-break-inside:avoid;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
+    body:has(#victory-overlay.is-open) .victory-badge{display:none;}
+    body:has(#victory-overlay.is-open) .victory-eyebrow{
+      color:#666;font-size:.85rem;letter-spacing:.16em;margin-bottom:8mm;
+    }
+    body:has(#victory-overlay.is-open) .victory-course{
+      color:#111;font-size:2rem;margin-bottom:5mm;line-height:1.1;font-weight:700;text-align:center;
+    }
+    body:has(#victory-overlay.is-open) .victory-title{
+      background:none;color:#111; /* gradient text is unreliable across print pipelines, so this
+                                      falls back to a solid dark color for guaranteed legibility */
+      font-size:1.4rem;margin-bottom:10mm;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
+    body:has(#victory-overlay.is-open) .victory-declare,
+    body:has(#victory-overlay.is-open) .victory-declare2{
+      color:#333;font-size:1.05rem;margin-bottom:6mm;
+    }
+    body:has(#victory-overlay.is-open) .victory-name{
+      color:#111;font-size:2.1rem;font-weight:700;margin:0 0 3mm;
+    }
+    body:has(#victory-overlay.is-open) .victory-username{
+      color:#555;font-size:1rem;margin-bottom:9mm;
+    }
+    body:has(#victory-overlay.is-open) .victory-role{
+      color:#111;font-size:1.6rem;margin:4mm 0 10mm;
+    }
+    body:has(#victory-overlay.is-open) .victory-date{
+      color:#333;font-size:.95rem;margin-bottom:8mm;
+    }
+    body:has(#victory-overlay.is-open) .victory-signature{
+      color:#333;font-size:1.05rem;border-color:#999;
+      padding-top:6mm;margin-bottom:0;max-width:70mm;
+    }
+    body:has(#victory-overlay.is-open) .victory-actions{display:none !important;}
+  }
+
+  /* ============ RESPONSIVE: MOBILE ============ */
+  @media (max-width:760px){
+    .hud{padding:32px 20px 12px;text-align:left;}
+    .hud-sub{margin-left:0;margin-right:0;}
+    .hud-progress{margin-left:0;margin-right:0;}
+    .roadmap-wrapper::before,.roadmap-wrapper::after{display:none;}
+    .roadmap-track{flex-direction:column;justify-content:flex-start;overflow-x:visible;padding:20px 20px 10px;}
+    .roadmap-node{
+      flex:1 1 auto;width:100%;flex-direction:row;align-items:stretch;gap:18px;
+      margin-bottom:22px;
+    }
+    .rail{width:40px;flex:0 0 40px;height:auto;align-self:stretch;}
+    .rail::before{top:0;bottom:0;left:50%;right:auto;width:3px;height:auto;transform:translateX(-50%);}
+    .roadmap-node:first-child .rail::before{top:50%;}
+    .roadmap-node:last-child .rail::before{bottom:50%;}
+    .marker{top:50%;left:50%;}
+    .card{margin-top:0;width:100%;flex:1;}
+
+    .drawer{width:100%;max-width:none;min-width:0;max-height:92vh;border-radius:18px 18px 0 0;}
+    .drawer-tabs{padding:0 20px;}
+    .drawer-body{padding:24px 20px 60px;}
+
+    .onboarding-card{padding:28px 22px 24px;}
+    .victory-card{padding:32px 22px 26px;}
+    .hud-progress{max-width:none;}
+  }
+
+  /* respect reduced motion preference */
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important;transition-duration:.001ms !important;}
+    .drawer-body{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="hud">
+  <div class="hud-brand">
+    <span class="hud-eyebrow">Centro de Interés - Colegio San José de Guanentá</span>
+    <h1>Mapa de Rodaje</h1>
+    <p class="hud-sub">Cada fase es un rodaje. Revisa el contenido, aprueba cada módulo, sigue la cinta, desbloquea la misión y dale play a tu próximo proyecto.</p>
+  </div>
+  <div class="hud-progress">
+    <div class="hud-progress-head">
+      <span class="hud-progress-label">Progreso del Laboratorio</span>
+      <span class="hud-progress-value" id="hud-progress-value">0%</span>
+    </div>
+    <div class="hud-progress-track">
+      <div class="hud-progress-fill" id="hud-progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+  <button type="button" class="hud-certificate-btn" id="hud-certificate-btn" hidden>
+    🎓 <span>Ver certificado</span>
+  </button>
+</header>
+
+<main class="roadmap-wrapper">
+  <!--
+    ESCALABILIDAD
+    =============
+    Este mapa se dibuja automáticamente a partir del array ROADMAP_DATA
+    definido en el <script> al final del archivo. Para agregar más
+    fases/semanas (hasta 15) NO edites este HTML: agrega un nuevo objeto
+    al array ROADMAP_DATA y todo (tarjeta, línea, marcador, modal de
+    misión, bloqueo dinámico, progreso, pestañas del Content Drawer y
+    Pruebas de Cámara) se genera solo. En escritorio la cinta hace
+    scroll horizontal; en móvil se apila en vertical. No hay límite
+    práctico de nodos.
+  -->
+  <div class="roadmap-track" id="roadmap-track" role="list" aria-label="Fases del rodaje"></div>
+</main>
+
+<!-- ============ MISSION MODAL ============ -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" id="modal">
+    <button class="modal-close" id="modal-close" aria-label="Cerrar misión">✕</button>
+    <div class="modal-head">
+      <span class="modal-icon" id="modal-icon"></span>
+      <div>
+        <span class="modal-code" id="modal-code"></span>
+        <h2 id="modal-title"></h2>
+      </div>
+    </div>
+    <p class="modal-mission" id="modal-mission"></p>
+    <div class="modal-objectives">
+      <span class="modal-obj-label">Objetivos de la misión</span>
+      <ul id="modal-objectives"></ul>
+    </div>
+    <button class="modal-cta" id="modal-cta">Misión Cumplida</button>
+  </div>
+</div>
+
+<!-- ============ CONTENT DRAWER — mini-app con pestañas por módulo ============ -->
+<div class="drawer-overlay" id="drawer-overlay">
+  <aside class="drawer" role="dialog" aria-modal="true" id="drawer">
+    <div class="drawer-header">
+      <span class="drawer-eyebrow" id="drawer-eyebrow">Contenido</span>
+      <button class="drawer-close" id="drawer-close" aria-label="Cerrar contenido">✕</button>
+    </div>
+    <!-- Tab bar: un botón por módulo de la fase activa -->
+    <div class="drawer-tabs" id="drawer-tabs"></div>
+    <div class="drawer-body" id="drawer-body">
+      <!-- Teoría del módulo activo, o su Prueba de Cámara, se renderiza aquí -->
+      <div id="drawer-panel"></div>
+    </div>
+  </aside>
+</div>
+
+<!-- ============ ONBOARDING — pantalla de bienvenida (primera carga) ============ -->
+<div class="onboarding-overlay" id="onboarding-overlay">
+  <div class="grain" aria-hidden="true"></div>
+  <div class="onboarding-card" id="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <span class="onboarding-eyebrow">Centro de Interés - Colegio San José de Guanentá</span>
+    <h1 class="onboarding-title" id="onboarding-title">Laboratorio de Creadores Digitales</h1>
+    <p class="onboarding-subtitle">Dirigido por Prof. Fabián Bautista G.</p>
+    <p class="onboarding-desc">Antes de dar "Acción", necesitamos tus datos para tu certificado final de creador.</p>
+
+    <div class="onboarding-field">
+      <label for="onboarding-name">Nombre Real</label>
+      <input type="text" id="onboarding-name" placeholder="Ej. Ana María Rodríguez" autocomplete="name">
+    </div>
+    <div class="onboarding-field">
+      <label for="onboarding-username">@Usuario</label>
+      <input type="text" id="onboarding-username" placeholder="Ej. ana.crea" autocomplete="off">
+    </div>
+
+    <button type="button" class="onboarding-start" id="onboarding-start">
+      <span>Comenzar Rodaje</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============ VICTORIA — certificado de Creador Digital ============ -->
+<div class="victory-overlay" id="victory-overlay">
+  <div class="victory-card" id="certificate">
+    <span class="victory-badge">🎬</span>
+    <span class="victory-eyebrow">Centro de Interés</span>
+    <h1 class="victory-course">Laboratorio de Creadores Digitales: Narrativas Audiovisuales y Redes Sociales</h1>
+    <h2 class="victory-title">Colegio San José de Guanentá</h2>
+    <p class="victory-declare">Certifica que</p>
+    <p class="victory-name" id="victory-name">—</p>
+    <p class="victory-username" id="victory-username">—</p>
+    <p class="victory-declare2">completó el laboratorio y es oficialmente un(a)</p>
+    <p class="victory-role">Creador Digital</p>
+    <p class="victory-date" id="victory-date"></p>
+    <p class="victory-signature">Prof. Fabián Bautista G.</p>
+    <div class="victory-actions">
+      <button type="button" class="victory-print" id="victory-print">Imprimir Certificado</button>
+      <button type="button" class="victory-close" id="victory-close">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ================================================================
+     ICONS — pequeños SVG en línea (sin librerías ni imágenes externas).
+     ================================================================ */
+  const ICONS = {
+    camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 8h2l1.5-2h9L18 8h2a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/>
+      <circle cx="12" cy="13" r="3.4"/>
+    </svg>`,
+    mic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="3" width="6" height="11" rx="3"/>
+      <path d="M5 11a7 7 0 0 0 14 0"/>
+      <path d="M12 18v3"/>
+      <path d="M8.5 21h7"/>
+    </svg>`,
+    clapper: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 10.5 20.5 7l.9 4.4L3.9 15Z"/>
+      <path d="M3 10.5 20 4l.5 2.4-17 3.6Z" opacity=".55"/>
+      <rect x="3" y="11" width="18" height="9" rx="1.4"/>
+      <path d="M8 14v6M13 14v6"/>
+    </svg>`,
+    lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="11" width="14" height="9" rx="1.6"/>
+      <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+    </svg>`,
+    check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M8 12.4 10.6 15 16 9.4"/>
+    </svg>`,
+    folder: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4l1.6 2H19A1.5 1.5 0 0 1 20.5 9v8A1.5 1.5 0 0 1 19 18.5H5A1.5 1.5 0 0 1 3.5 17Z"/>
+    </svg>`,
+    quiz: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M9.2 9.6a2.8 2.8 0 1 1 3.9 2.9c-.9.5-1.1 1-1.1 1.9"/>
+      <path d="M12 17.2h.01"/>
+    </svg>`,
+    compare: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 7 4 12l4 5"/>
+      <path d="M16 7l4 5-4 5"/>
+    </svg>`,
+    clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 7v5l3.5 2"/>
+    </svg>`,
+    order: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 7h11M3 12h7M3 17h4"/>
+      <path d="M18 6v13"/>
+      <path d="M15 9l3-3 3 3"/>
+    </svg>`,
+    orderLeft: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 6l-6 6 6 6"/>
+    </svg>`,
+    orderRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 6l6 6-6 6"/>
+    </svg>`,
+    dial: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 6h6M14 6h6M4 12h2M8 12h12M4 18h6M14 18h6"/>
+      <circle cx="12" cy="6" r="2" fill="currentColor" stroke="none"/>
+      <circle cx="6" cy="12" r="2" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="18" r="2" fill="currentColor" stroke="none"/>
+    </svg>`,
+    graduation: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3 2 8l10 5 10-5-10-5Z"/>
+      <path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5"/>
+      <path d="M22 8v6"/>
+    </svg>`
+  };
+
+  /* Builds one illustrative "before / after" comparison slider block for
+     theory prose. Returns an HTML string, dropped straight into a
+     module's contentHTML via a template literal. Unrelated to the
+     graded calibrationTasks exercises below. */
+  function buildCompareSlider(beforeSrc, afterSrc, beforeLabel, afterLabel){
+    return '<div class="compare-wrapper">' +
+        '<img class="img-after" src="' + afterSrc + '" alt="Después: ' + afterLabel + '">' +
+        '<img class="img-before" src="' + beforeSrc + '" alt="Antes: ' + beforeLabel + '">' +
+        '<span class="compare-label compare-label-before">' + beforeLabel + '</span>' +
+        '<span class="compare-label compare-label-after">' + afterLabel + '</span>' +
+        '<div class="compare-divider" aria-hidden="true"><span class="compare-handle">' + ICONS.compare + '</span></div>' +
+        '<input type="range" class="compare-slider" min="0" max="100" value="50" aria-label="Comparar ' + beforeLabel + ' con ' + afterLabel + '">' +
+      '</div>';
+  }
+
+  const ACCENT_HEX = { teal:'#1fe7d1', orange:'#ff7a45' };
+  const COMPLETED_HEX = '#2ecc71';
+  const GATED_HEX = '#f5c451';
+  const LOCKED_HEX = '#55555c';
+  const COMPLETED_STORAGE_KEY = 'mapaRodaje:completedPhases';
+  const MODULE_CALIBRATION_STORAGE_KEY = 'mapaRodaje:passedCalibrations';
+  const PROFILE_STORAGE_KEY = 'mapaRodaje:profile';
+  const VICTORY_SEEN_KEY = 'mapaRodaje:victorySeen';
+
+  /* ================================================================
+     ROADMAP_DATA — única fuente de verdad del mapa de rodaje.
+
+     CORE GAMEPLAY: CUATRO TIPOS DE PRUEBA (secuencia progresiva)
+     ========================================================
+     Cada módulo puede incluir, en vez de "quiz", UNO de estos cuatro
+     arrays — un módulo usa como máximo uno de los cuatro:
+       - calibrationTasks: slider + filtro CSS (o, sin filterType, un
+                            "ajuste" numérico — ver más abajo)
+       - audioTasks:        reproductor de audio + opción múltiple
+       - textTasks:          escenario narrativo + opción múltiple
+       - orderTasks:         línea de tiempo reordenable (clips)
+     Todos comparten la misma mecánica: una secuencia de retos con
+     curva de dificultad. El alumno resuelve el Reto 1, luego el Reto
+     2, y así sucesivamente hasta el último; fallar un reto dispara
+     retroalimentación "Fail Smart" (caja roja + animación de shake,
+     tono "¡Corte! 🎬 ...") y puede reintentar de inmediato. Acertar
+     el ÚLTIMO reto aprueba el módulo completo (tono "¡Queda! 🎥 ...")
+     y desbloquea la misión.
+
+     SISTEMA DE PROGRESIÓN DINÁMICA
+     ===============================
+     El bloqueo de cada fase se calcula en tiempo real: la fase N está
+     bloqueada hasta que se aprueban TODAS las Pruebas (de cualquiera
+     de los 4 tipos) de TODAS las fases anteriores (0..N−1) — ver
+     isPrerequisitePassed. La primera fase siempre está desbloqueada.
+     Un módulo sin ninguno de los 4 arrays, o una fase sin ningún
+     módulo con alguno de ellos, no bloquea nada — se considera "solo
+     teoría". Esto depende ÚNICAMENTE de esas pruebas, nunca de si la
+     misión fue marcada como cumplida.
+
+     Campos de cada fase:
+     - id       número único (clave de progreso en localStorage)
+     - phase    número de fase/semana → se muestra como "FASE 0X"
+     - name     título en español (ej. "El Ojo Fotográfico")
+     - icon     'camera' | 'mic' | 'clapper' | 'folder' (ver ICONS)
+     - accent   'teal' | 'orange' — opcional; si se omite se alterna
+                según la posición
+     - modules  array de módulos de aprendizaje, cada uno una pestaña
+                del Content Drawer: { tabTitle, contentHTML (o
+                theorySteps), calibrationTasks | audioTasks | textTasks
+                | orderTasks }.
+                - tabTitle:    texto corto del botón de pestaña
+                - locked:      opcional, boolean. Si es true, la pestaña
+                               se puede abrir pero SIEMPRE muestra una
+                               pantalla de candado con lockedMessage en
+                               vez del contenido/retos reales (útil para
+                               "todavía no le toca su semana" — el
+                               contenido puede quedar ya escrito abajo,
+                               inerte, listo para cuando se quite el
+                               flag). A propósito, un módulo locked SÍ
+                               sigue contando para el progreso (ver
+                               hasModuleQuiz) — como nadie puede pasar
+                               sus retos mientras está bloqueado, la
+                               fase se queda en "Requiere Teoría" y las
+                               fases siguientes se quedan bloqueadas
+                               también, para que nadie se adelante a un
+                               tema que todavía no se ha dado en clase.
+                               Quita la línea cuando llegue su semana
+                               para que la fase pueda completarse.
+                - lockedMessage: opcional, string. Texto que se muestra
+                               junto al candado cuando locked es true.
+                - contentHTML: HTML crudo con la teoría de ese módulo,
+                               como un solo bloque. Puede incluir
+                               imágenes (.content-img) y comparadores
+                               ilustrativos "antes/después" generados
+                               con buildCompareSlider(...).
+                - theorySteps: alternativa a contentHTML — presenta la
+                               teoría por partes, como tarjetas, con un
+                               botón "Continuar →" entre cada una (el
+                               Content Drawer ahora sale desde abajo,
+                               no desde la derecha). Es un ARRAY:
+                     [{ html: '<h3>...</h3><p>...</p>' }, { html: '...' }, ...]
+                               Si un módulo define theorySteps, ese
+                               campo manda y contentHTML se ignora. Si
+                               solo tiene contentHTML, se muestra como
+                               un único paso (compatibilidad con
+                               módulos que aún no se han dividido en
+                               tarjetas). Ver el módulo "Composición"
+                               de la Fase 1 como ejemplo ya convertido.
+                - calibrationTasks: opcional, para retos VISUALES o de
+                               AJUSTE NUMÉRICO. Es un ARRAY ordenado:
+                     [{ instruction, imageSrc, filterType, unit,
+                        minRange, maxRange, sweetSpot: [min, max],
+                        feedbackTooLow, feedbackTooHigh,
+                        feedbackSuccess }, ...]
+                   - Reto VISUAL: filterType es cualquier función CSS
+                     filter() ('brightness', 'contrast', 'saturate',
+                     'sepia'...); el valor del slider se aplica como
+                     filterType(valor%) sobre imageSrc (una foto real
+                     en ./img/...).
+                   - Reto de AJUSTE (segundos, % de posición, palabras,
+                     FPS...): deja filterType: '' y agrega unit (ej.
+                     's', ' FPS', ' palabras'). En este caso NO hace
+                     falta imageSrc — la interfaz muestra un lector
+                     numérico local (.calibration-readout) en vez de
+                     una foto, así que estos retos no dependen de
+                     internet ni de una imagen de referencia.
+                   - minRange/maxRange acotan el slider de CADA reto.
+                   - sweetSpot es el rango que cuenta como correcto.
+                   - initialValue: opcional, en qué valor arranca el
+                     slider (por defecto minRange). Casi todos los retos
+                     "empiezan oscuros y hay que subir" (minRange sirve
+                     de sobra). Pero un reto cuya foto YA está
+                     sobreexpuesta ("cegados por el sol") necesita lo
+                     contrario: arrancar cerca del valor real de la foto
+                     (ej. 100%, blown-out) y que el alumno baje hasta el
+                     sweetSpot — para eso existe initialValue.
+                - audioTasks: opcional, retos de AUDIO (opción múltiple
+                               con reproductor, ya que un filtro CSS no
+                               tiene sentido sobre sonido). ARRAY:
+                     [{ instruction, audioSrc, options: [...],
+                        correctIndex, feedbackWrong, feedbackSuccess }, ...]
+                - textTasks: opcional, retos de GUION/DECISIÓN
+                               narrativa (opción múltiple con un
+                               escenario de texto en vez de audio) — o,
+                               si se usa imageSrc, retos de
+                               IDENTIFICACIÓN visual. ARRAY:
+                     [{ instruction, scenario, imageSrc, options: [...],
+                        correctIndex, feedbackWrong, feedbackSuccess }, ...]
+                   - scenario es opcional: una frase corta en cursiva
+                     que da contexto antes de las opciones.
+                   - imageSrc es opcional: si el PRIMER textTask del
+                     módulo lo trae, todo el bloque se trata como un
+                     reto de "Identificación" (ver isIdentificationTask
+                     en el script) — cambia el ícono y las etiquetas de
+                     "Reto de Guion" a "Identificación", y muestra la
+                     foto (.content-img) encima de las opciones en vez
+                     del escenario de texto. Útil para "¿qué ángulo o
+                     regla de composición ves en esta foto?". Ejemplo
+                     ya convertido: módulo "Composición" de la Fase 1.
+                - orderTasks: opcional, retos de ORDEN (línea de
+                               tiempo con clips que se mueven con
+                               flechas izquierda/derecha). ARRAY:
+                     [{ instruction, items: [...], correctOrder: [...],
+                        feedbackWrong, feedbackSuccess }, ...]
+                   - items es el orden inicial (desordenado) que ve el
+                     alumno; correctOrder es la secuencia exacta que
+                     se evalúa. Los textos pueden llevar comillas
+                     dobles sin problema (se escapan automáticamente).
+                 En los cuatro tipos, options/correctIndex comparten
+                 forma, así que audioTasks y textTasks reutilizan el
+                 mismo manejador (handleAudioAnswer).
+                Si un módulo omite los cuatro arrays (o los deja
+                vacíos), es puramente teórico y no exige evaluación.
+                El botón "Ver misión" de la tarjeta queda en estado
+                "Requiere Teoría" hasta que TODOS los retos de TODOS
+                los módulos evaluables de la fase estén aprobados.
+     - teaser      frase corta para la tarjeta (máx. ~90 caracteres)
+     - mission     párrafo de la misión, se muestra dentro del modal
+     - objectives  array de 2 a 4 strings con los objetivos de la misión
+
+     El estado "completada" tampoco se guarda aquí: se calcula en
+     tiempo real leyendo localStorage, así que se actualiza solo
+     cuando el alumno pulsa "Misión Cumplida".
+
+     Para agregar la Semana 05 en adelante (hasta 15), copia este bloque
+     de ejemplo, pégalo al final del array y completa los campos:
+
+     {
+       id: 5,
+       phase: 5,
+       name: 'Tu nueva fase',
+       icon: 'camera',
+       accent: 'orange',
+       modules: [
+         {
+           tabTitle: 'Módulo A',
+           theorySteps: [
+             { html: '<h3>Título</h3><p>Primer bloque de teoría.</p>' },
+             { html: '<p>Segundo bloque, aparece al pulsar "Continuar".</p>' }
+           ],
+           calibrationTasks: [
+             {
+               instruction: 'Reto 1/2: Calibra X hasta encontrar el punto correcto.',
+               imageSrc: './img/URL_DE_LA_IMAGEN.jpg',
+               filterType: 'saturate',
+               minRange: 0,
+               maxRange: 100,
+               sweetSpot: [40, 60],
+               feedbackTooLow: 'Texto si el valor queda por debajo.',
+               feedbackTooHigh: 'Texto si el valor queda por encima.',
+               feedbackSuccess: 'Texto si acierta el rango correcto.'
+             },
+             {
+               instruction: 'Reto 2/2: Un ajuste más fino.',
+               imageSrc: './img/URL_DE_LA_IMAGEN_2.jpg',
+               filterType: 'saturate',
+               minRange: 0,
+               maxRange: 100,
+               sweetSpot: [55, 65],
+               feedbackTooLow: 'Texto si el valor queda por debajo.',
+               feedbackTooHigh: 'Texto si el valor queda por encima.',
+               feedbackSuccess: 'Texto si acierta el rango correcto.'
+             }
+           ]
+         }
+       ],
+       teaser: 'Frase corta y atractiva para la tarjeta.',
+       mission: 'Descripción completa de la misión de esta semana.',
+       objectives: ['Objetivo 1', 'Objetivo 2', 'Objetivo 3']
+     }
+     ================================================================ */
+  const ROADMAP_DATA = [
+    {
+      id: 1,
+      phase: 1,
+      name: 'El Ojo Fotográfico',
+      icon: 'camera',
+      accent: 'teal',
+      modules: [
+        {
+          tabTitle: 'Composición',
+          /* Converted to theorySteps as the pilot for the new "story card"
+             format (ago 2026): cada tarjeta es un paso, con "Continuar →"
+             entre ellas en vez de un solo bloque largo. También se
+             completaron los ángulos que faltaban (Cenital y Holandés) y
+             cada ángulo ahora tiene su propio ejemplo fotográfico — hacen
+             falta 5 fotos nuevas, ver angulo-*.jpg más abajo. Sigue sin
+             calibrationTask: es teoría pura, la práctica es la misión. */
+          theorySteps: [
+            {
+              html: `
+                <h3>1. Hackea tu encuadre: La Regla de los Tercios</h3>
+                <p>¿Alguna vez sientes que tus fotos o videos se ven aburridos y no sabes por qué? El secreto no está en tener el último celular, sino en <strong>dónde</strong> ubicas las cosas en la pantalla.</p>
+                <p>Imagina que tu pantalla es un tablero de triqui (3×3). El instinto de novato es poner siempre tu rostro o el objeto justo en el centro. ¡Error! Los creadores <em>pro</em> ubican lo más importante en los puntos donde esas líneas se cruzan.</p>
+              `
+            },
+            {
+              html: `
+                <h3>Actívala y compruébalo</h3>
+                <p>Activa la cuadrícula de tu cámara ahora mismo (casi todos los celulares la tienen en Ajustes → Cámara → Cuadrícula) y nota la diferencia al instante: el sujeto ya no compite con el centro exacto de la imagen, sino que "respira" dentro del cuadro.</p>
+                <img src="./img/tercios.jpg" class="content-img" alt="Ejemplo de composición con la regla de tercios, sujeto ubicado sobre una intersección de la cuadrícula 3×3">
+              `
+            },
+            {
+              html: `
+                <h3>Ángulos que hablan</h3>
+                <p>El lugar donde pones la cámara cambia por completo la "vibra" de tu video sin que tengas que decir una sola palabra. Vamos a repasar cinco ángulos, uno por uno, con un ejemplo de cada uno.</p>
+              `
+            },
+            {
+              html: `
+                <h4>Contrapicado (desde abajo)</h4>
+                <p><strong>Contrapicado:</strong> la cámara se ubica por debajo del sujeto, mirando hacia arriba. Hace que quien está en pantalla se vea imponente, grande o poderoso. Piensa en los videos de rap o en los planos de superhéroes.</p>
+                <img src="./img/angulo-contrapicado.jpg" class="content-img" alt="Ejemplo de ángulo contrapicado: cámara por debajo del sujeto, mirando hacia arriba">
+              `
+            },
+            {
+              html: `
+                <h4>Picado (desde arriba)</h4>
+                <p><strong>Picado:</strong> logra el efecto contrario al contrapicado. La cámara mira hacia abajo y hace que el sujeto se vea pequeño, inofensivo o vulnerable.</p>
+                <img src="./img/angulo-picado.jpg" class="content-img" alt="Ejemplo de ángulo picado: cámara por encima del sujeto, mirando hacia abajo">
+              `
+            },
+            {
+              html: `
+                <h4>Normal (a la altura de los ojos)</h4>
+                <p><strong>Normal:</strong> conecta directamente con quien está viendo el video del otro lado de la pantalla; se siente natural, como una videollamada con un amigo. Es el ángulo por defecto para entrevistas y vlogs.</p>
+                <img src="./img/angulo-normal.jpg" class="content-img" alt="Ejemplo de ángulo normal: cámara a la altura de los ojos del sujeto">
+              `
+            },
+            {
+              html: `
+                <h4>Cenital (vista de pájaro)</h4>
+                <p><strong>Cenital:</strong> la cámara se ubica justo encima del sujeto, mirando derecho hacia abajo (90°). Es el ángulo favorito para "flatlays" de comida, manualidades, o retos de baile grabados desde el techo. Convierte cualquier mesa en un escenario ordenado y fácil de leer.</p>
+                <img src="./img/angulo-cenital.jpg" class="content-img" alt="Ejemplo de ángulo cenital: cámara justo encima del sujeto, mirando hacia abajo">
+              `
+            },
+            {
+              html: `
+                <h4>Holandés o inclinado (Dutch angle)</h4>
+                <p><strong>Holandés:</strong> la cámara se inclina de lado, así que el horizonte queda torcido en vez de recto. Genera tensión, desorden o energía — se usa mucho en escenas de acción, thrillers, o simplemente para darle dinamismo a un clip de redes sociales. Con el celular, basta con girar la muñeca unos 15-20° al grabar.</p>
+                <img src="./img/angulo-holandes.jpg" class="content-img" alt="Ejemplo de ángulo holandés: horizonte inclinado, cámara girada de lado">
+              `
+            },
+            {
+              html: `
+                <h3>Tu turno</h3>
+                <p>Ya conoces la regla de tercios y cinco ángulos distintos. Antes de salir a grabar, pon a prueba tu ojo con la Identificación: 5 fotos de ejemplo para que reconozcas en cada una la regla de tercios o el ángulo usado. Después, el reto real: sal a tomar 5 fotos, una con cada ángulo (contrapicado, picado, normal, cenital y holandés), aplicando la regla de tercios en al menos dos de ellas. Súbelas donde indica la misión de esta fase.</p>
+              `
+            }
+          ],
+          /* Reto de Identificación: 2 sobre regla de tercios + 3 sobre
+             ángulos, reutilizando el motor de textTasks con imageSrc
+             (ver isIdentificationTask en el script) en vez de un
+             escenario escrito. Todas las fotos de los 5 retos son
+             DISTINTAS de los ejemplos de la teoría a propósito, para
+             que el alumno reconozca el concepto en vez de memorizar
+             qué pie de foto le correspondía. */
+          textTasks: [
+            {
+              instruction: 'Identificación 1/5: Mira esta foto. ¿Aplica correctamente la regla de tercios?',
+              imageSrc: './img/identificacion-tercios-bien.jpg',
+              options: [
+                'Sí: el sujeto está ubicado sobre una intersección de la cuadrícula',
+                'No: el sujeto está exactamente en el centro del encuadre',
+                'No: la regla de tercios solo aplica a paisajes, no a personas'
+              ],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 Vuelve a mirar dónde cae el sujeto respecto a la cuadrícula 3×3, no solo si "se ve bien".',
+              feedbackSuccess: '¡Queda! 🎥 Correcto. El sujeto está sobre una de las cuatro intersecciones, justo como pide la regla.'
+            },
+            {
+              instruction: 'Identificación 2/5: ¿Qué le falta a esta composición?',
+              imageSrc: './img/identificacion-tercios-mal.jpg',
+              options: [
+                'Nada, la composición ya está perfecta',
+                'El sujeto está centrado; debería moverse a una intersección de la cuadrícula',
+                'Le falta más luz para que se note el sujeto'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 El problema no es la luz ni el encuadre en general — es específicamente dónde quedó ubicado el sujeto.',
+              feedbackSuccess: '¡Queda! 🎥 Exacto. Centrar el sujeto es el error de novato clásico que la regla de tercios corrige.'
+            },
+            {
+              instruction: 'Identificación 3/5: ¿Qué ángulo de cámara se usó en esta foto?',
+              imageSrc: './img/identificacion-angulo-contrapicado.jpg',
+              options: ['Picado (desde arriba)', 'Contrapicado (desde abajo)', 'Cenital (desde arriba, 90°)', 'Normal (a la altura de los ojos)'],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Fíjate desde dónde está mirando la cámara: ¿hacia arriba o hacia abajo?',
+              feedbackSuccess: '¡Queda! 🎥 Correcto. La cámara mira hacia arriba, así que el sujeto se ve imponente: es contrapicado.'
+            },
+            {
+              instruction: 'Identificación 4/5: ¿Qué ángulo de cámara se usó en esta foto?',
+              imageSrc: './img/identificacion-angulo-cenital.jpg',
+              options: ['Contrapicado (desde abajo)', 'Holandés (inclinado)', 'Cenital (desde arriba, 90°)', 'Normal (a la altura de los ojos)'],
+              correctIndex: 2,
+              feedbackWrong: '¡Corte! 🎬 No confundas "desde arriba en ángulo" (picado) con "justo encima, mirando derecho hacia abajo".',
+              feedbackSuccess: '¡Queda! 🎥 Exacto. Vista de pájaro, cámara a 90° sobre el sujeto: es cenital.'
+            },
+            {
+              instruction: 'Identificación 5/5 (Jefe Final): ¿Qué ángulo de cámara se usó en esta foto?',
+              imageSrc: './img/identificacion-angulo-holandes.jpg',
+              options: ['Picado (desde arriba)', 'Normal (a la altura de los ojos)', 'Contrapicado (desde abajo)', 'Holandés (inclinado)'],
+              correctIndex: 3,
+              feedbackWrong: '¡Corte! 🎬 Mira el horizonte de la foto: ¿está derecho o torcido?',
+              feedbackSuccess: '¡Queda! 🎥 ¡Ojo entrenado! El horizonte inclinado es la firma del ángulo holandés. Módulo superado.'
+            }
+          ]
+        },
+        {
+          tabTitle: 'Luz Natural',
+          /* Convertido a theorySteps (ago 2026): mismo formato "story card"
+             que Composición. Se agregó un paso nuevo dedicado a la Golden
+             Hour con foto propia (golden-hour.jpg, nueva) y se conservan
+             sin cambios los 5 calibrationTasks (retos de brillo) ya
+             existentes, con sus imágenes luz-reto1.jpg a luz-reto5.jpg. */
+          theorySteps: [
+            {
+              html: `
+                <h3>2. El sol es tu mejor aro de luz</h3>
+                <p>Olvídate de comprar luces carísimas por ahora. Si sabes leer y aprovechar la luz natural, tu celular puede grabar con calidad de cine. Hay dos tipos de luz que debes dominar.</p>
+              `
+            },
+            {
+              html: `
+                <h4>Luz Dura</h4>
+                <p><strong>Luz Dura:</strong> Es la del sol directo al mediodía o la linterna de otro celular apuntada a la cara. Crea sombras súper oscuras y marcadas. Tiene una estética intensa y dramática, pero cuidado: marca todas las texturas del rostro y suele hacer que la gente cierre los ojos.</p>
+                <img src="./img/luz-dura.jpg" class="content-img" alt="Ejemplo de luz dura: sombras marcadas y de bordes definidos, luz solar directa o linterna apuntada de frente">
+              `
+            },
+            {
+              html: `
+                <h4>Luz Suave</h4>
+                <p><strong>Luz Suave:</strong> Tu mejor amiga para grabar a otras personas. Es la luz de un día nublado o la que entra por una ventana de lado. Borra las sombras raras, difumina los contornos y hace que la piel se vea increíble.</p>
+                <p>Arrastra el comparador para ver la diferencia.</p>
+                ${buildCompareSlider('./img/luz-dura.jpg', './img/luz-suave.jpg', 'Luz Dura', 'Luz Suave')}
+              `
+            },
+            {
+              html: `
+                <h3>La "Golden Hour" (Hora Dorada)</h3>
+                <p>Es ese ratito mágico justo después del amanecer o justo antes de que se esconda el sol. Todo se ve naranja, cálido y épico porque la luz atraviesa más atmósfera. Si quieres un clip verdaderamente <em>aesthetic</em> para tus historias, tienes que salir a cazar esta luz.</p>
+                <img src="./img/golden-hour.jpg" class="content-img" alt="Ejemplo de Golden Hour: luz cálida y rasante justo después del amanecer o antes del atardecer">
+              `
+            },
+            {
+              html: `
+                <h3>Tu turno</h3>
+                <p>Ya sabes distinguir luz dura de luz suave y cazar la Golden Hour. Ahora ponlo en práctica: te esperan 5 retos donde tendrás que calibrar la exposición de escenas reales hasta encontrar el punto exacto. ¡Ojo de director, activado!</p>
+              `
+            }
+          ],
+          calibrationTasks: [
+            {
+              /* minRange/maxRange/sweetSpot recalibrados (ago 2026) con
+                 el brillo real de luz-reto1.jpg: a 100% (la foto tal
+                 cual) ya se ve bien expuesta, se mantiene nítida hasta
+                 ~140% y recién se empieza a quemar el cielo pasado
+                 ~160% — confirmado renderizando el filtro brightness()
+                 sobre la foto real, no solo calculado. */
+              instruction: 'Reto 1/5 (El Apagón): La toma está completamente oscura. Desliza para abrir el diafragma y recuperar el ambiente de atardecer sobre la ciudad.',
+              imageSrc: './img/luz-reto1.jpg',
+              filterType: 'brightness',
+              minRange: 0, maxRange: 200, sweetSpot: [90, 135],
+              feedbackTooLow: '¡Corte! 🎬 Sigue muy oscuro, no se distingue el horizonte. Sube más la luz.',
+              feedbackTooHigh: '¡Corte! 🎬 Demasiada luz, quemaste el atardecer. Bájala un poco.',
+              feedbackSuccess: '¡Queda! 🎥 Bien hecho. Rescataste la atmósfera de la toma sin perder la silueta.'
+            },
+            {
+              /* La foto YA está sobreexpuesta de fábrica (destello de
+                 sol incluido) — arranca en initialValue:100 (la foto tal
+                 cual, "cegados por el sol" real) y el alumno debe BAJAR
+                 la exposición, no subirla. maxRange se limitó a 100
+                 porque subir más allá del original no tiene sentido
+                 ("reduce la exposición" es el único movimiento válido).
+                 sweetSpot recalibrado renderizando la foto real: entre
+                 35-55% es donde playa/personas/colores se leen mejor
+                 sin quedar ni oscura ni deslumbrada. */
+              instruction: 'Reto 2/5 (Cegados por el Sol): Hay un exceso de luz brutal. Reduce la exposición hasta que los colores se vean normales.',
+              imageSrc: './img/luz-reto2.jpg',
+              filterType: 'brightness',
+              minRange: 0, maxRange: 100, initialValue: 100, sweetSpot: [35, 55],
+              feedbackTooLow: '¡Corte! 🎬 Ahora te pasaste de oscuro. Sube un poco.',
+              feedbackTooHigh: '¡Corte! 🎬 Sigue estallada de luz. Tienes que bajarla más.',
+              feedbackSuccess: '¡Queda! 🎥 Excelente. El mar y la escena recuperaron su color.'
+            },
+            {
+              /* La foto es un contraluz real: casi negra a 100% (tal
+                 cual se tomó). minRange se subió de 0 a 100 porque no
+                 tiene sentido oscurecerla más allá de lo real — el reto
+                 es solo SUBIR desde ahí. Antes el sweetSpot (115-125%)
+                 era inalcanzable en la práctica: incluso al tope viejo
+                 de 200% la fachada seguía casi negra. Renderizando la
+                 foto real, recién entre 250-290% se leen bien los
+                 detalles de la fachada sin quemar el cielo — de ahí el
+                 maxRange:400 (deja margen para el feedback "muy alto"). */
+              instruction: 'Reto 3/5 (El Contraluz): El cielo está muy brillante y el edificio queda casi negro. Busca el punto medio para que se noten los detalles de la fachada sin quemar el cielo.',
+              imageSrc: './img/luz-reto3.jpg',
+              filterType: 'brightness',
+              minRange: 100, maxRange: 400, sweetSpot: [250, 290],
+              feedbackTooLow: '¡Corte! 🎬 El edificio sigue en sombras. Necesita un poco más de luz.',
+              feedbackTooHigh: '¡Corte! 🎬 El edificio ya se ve bien, pero quemaste el cielo. Bájale un poco.',
+              feedbackSuccess: '¡Queda! 🎥 Perfecto. Encontraste el equilibrio del contraluz.'
+            },
+            {
+              instruction: 'Reto 4/5 (Sombra traicionera): Esta calle tiene sombra despareja por los árboles. El ajuste debe ser sutil para no lavar los colores.',
+              imageSrc: './img/luz-reto4.jpg',
+              filterType: 'brightness',
+              minRange: 50, maxRange: 150, sweetSpot: [105, 115],
+              feedbackTooLow: '¡Corte! 🎬 Un poco triste y oscura. Súbela un pelo.',
+              feedbackTooHigh: '¡Corte! 🎬 Demasiado brillante, parece que no hubiera sombra. Bájala.',
+              feedbackSuccess: '¡Queda! 🎥 Ajuste limpio y sutil.'
+            },
+            {
+              instruction: 'Reto 5/5 (El Ojo de Halcón): Jefe Final. Esta foto parece estar bien, pero está un 10% subexpuesta. Encuentra la precisión milimétrica.',
+              imageSrc: './img/luz-reto5.jpg',
+              filterType: 'brightness',
+              minRange: 80, maxRange: 120, sweetSpot: [108, 112],
+              feedbackTooLow: '¡Corte! 🎬 Te quedaste corto. Requiere ojo de cirujano.',
+              feedbackTooHigh: '¡Corte! 🎬 Te pasaste. Es un ajuste microscópico.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Ojo de director pro! Tienes la calibración perfecta.'
+            }
+          ]
+        },
+        {
+          tabTitle: 'Revelado',
+          /* Bloqueado a propósito (ago 2026): el contenido ya está
+             escrito más abajo, pero todavía no le toca su semana. Con
+             locked:true la pestaña se puede abrir pero solo muestra el
+             candado + el mensaje de "vuelve la próxima semana" — el
+             contenido y los calibrationTasks de abajo quedan inertes
+             mientras tanto. A propósito, esto SÍ mantiene bloqueadas la
+             misión de esta fase y la Fase 2 (nadie puede pasar los
+             retos de un módulo al que no puede entrar — ver
+             hasModuleQuiz), así que nadie avanza más rápido que el
+             ritmo real de la clase. Para reactivarlo cuando llegue su
+             semana, borra la línea locked (y opcionalmente
+             lockedMessage). */
+          locked: true,
+          lockedMessage: '¡La próxima semana continuamos en nuestro Laboratorio de Creadores Digitales!',
+          contentHTML: `
+            <h3>3. Revelado: El toque final</h3>
+            <p>"Revelar" una foto o video en el celular no significa ponerle el filtro más exagerado de Instagram hasta que se vea falso. Los verdaderos creadores usan las herramientas nativas del teléfono o apps de edición para ajustar tres cosas clave y darle un <em>look</em> profesional:</p>
+
+            <h4>Exposición</h4>
+            <p>¿Tu toma quedó muy oscura o estallada de luz (casi blanca)? Aquí lo equilibras para recuperar los detalles.</p>
+            ${buildCompareSlider('./img/expo-antes.jpg', './img/expo-despues.jpg', 'Subexpuesto', 'Correcto')}
+
+            <h4>Contraste</h4>
+            <p>Hace que los colores oscuros sean más profundos y los claros más brillantes. Le da fuerza a la imagen para que no se vea "lavada" o grisácea.</p>
+            ${buildCompareSlider('./img/contraste-antes.jpg', './img/contraste-despues.jpg', 'Plano', 'Contrastado')}
+
+            <h4>Temperatura</h4>
+            <p>Define el mood. ¿Quieres que el video transmita un ambiente frío y de suspenso (tonos azulados) o uno cálido y nostálgico (tonos naranjas)?</p>
+            ${buildCompareSlider('./img/temp-antes.jpg', './img/temp-despues.jpg', 'Frío', 'Cálido')}
+            
+            <p><strong>Pro-Tip:</strong> La regla de oro del revelado es que <em>menos es más</em>. Un buen ajuste resalta la realidad, pero no se nota a simple vista.</p>
+          `,
+          calibrationTasks: [
+            {
+              instruction: 'Reto 1/5 (La Nevera): La escena se ve triste y azul. Dale calidez arrastrando a la derecha.',
+              imageSrc: './img/rev-reto1.jpg',
+              filterType: 'sepia',
+              minRange: 0, maxRange: 100, sweetSpot: [40, 60],
+              feedbackTooLow: '¡Corte! 🎬 Sigue haciendo frío. Más temperatura.',
+              feedbackTooHigh: '¡Corte! 🎬 ¡Te pasaste! Se ve naranja radioactivo.',
+              feedbackSuccess: '¡Queda! 🎥 Buen mood cálido.'
+            },
+            {
+              instruction: 'Reto 2/5 (Plano y aburrido): Los colores están grises y lavados. Aumenta el contraste.',
+              imageSrc: './img/rev-reto2.jpg',
+              filterType: 'contrast',
+              minRange: 0, maxRange: 200, sweetSpot: [130, 150],
+              feedbackTooLow: '¡Corte! 🎬 Sigue viéndose lavada y plana.',
+              feedbackTooHigh: '¡Corte! 🎬 Contraste brutal, destruiste las sombras.',
+              feedbackSuccess: '¡Queda! 🎥 Imagen con volumen y fuerza.'
+            },
+            {
+              instruction: 'Reto 3/5 (Desaturación): Los colores están muy pálidos. Devuélveles la vida sin que parezcan de caricatura.',
+              imageSrc: './img/rev-reto3.jpg',
+              filterType: 'saturate',
+              minRange: 0, maxRange: 200, sweetSpot: [120, 140],
+              feedbackTooLow: '¡Corte! 🎬 Sigue muy gris. Más color.',
+              feedbackTooHigh: '¡Corte! 🎬 Colores falsos y dolorosos a la vista. Bájale.',
+              feedbackSuccess: '¡Queda! 🎥 Colores vivos y naturales.'
+            },
+            {
+              instruction: 'Reto 4/5 (Falsificando la Hora Dorada): Simula un atardecer. El margen de error es pequeño; si te pasas, se notará la edición.',
+              imageSrc: './img/rev-reto4.jpg',
+              filterType: 'sepia',
+              minRange: 0, maxRange: 100, sweetSpot: [25, 35],
+              feedbackTooLow: '¡Corte! 🎬 No se siente el atardecer aún.',
+              feedbackTooHigh: '¡Corte! 🎬 Se ve como un filtro barato de Instagram. Sé sutil.',
+              feedbackSuccess: '¡Queda! 🎥 Un toque de atardecer súper elegante.'
+            },
+            {
+              instruction: 'Reto 5/5 (Jefe Final): Contraste milimétrico. Separa sutilmente el sujeto del fondo sin destruir las sombras.',
+              imageSrc: './img/rev-reto5.jpg',
+              filterType: 'contrast',
+              minRange: 80, maxRange: 150, sweetSpot: [108, 115],
+              feedbackTooLow: '¡Corte! 🎬 Le falta un pelito de fuerza.',
+              feedbackTooHigh: '¡Corte! 🎬 Te pasaste y perdiste información en los negros.',
+              feedbackSuccess: '¡Queda! 🎥 Revelado de alto nivel. Impecable.'
+            }
+          ]
+        }
+      ],
+      teaser: 'Antes de grabar, aprende a mirar como un director de fotografía.',
+      mission: 'Tu primera misión como creador es entrenar el ojo: descubrir cómo la luz, el encuadre y la composición cuentan una historia antes de que ruede la cámara. Sales a la calle a cazar imágenes, no a improvisar. Sube tus fotos al Padlet del equipo.',
+      objectives: [
+        'Dominar la regla de tercios y el encuadre',
+        'Identificar y clasificar luz dura o luz suave',
+        'Aplicar un revelado sutil en tu celular'
+      ]
+    },
+    {
+      id: 2,
+      phase: 2,
+      name: 'El Poder de la Voz',
+      icon: 'mic',
+      accent: 'orange',
+      modules: [
+        {
+          tabTitle: 'Micrófono y Acústica',
+          contentHTML: `
+            <h3>1. La Ley de la Distancia</h3>
+            <p>Puedes grabar un video en 4K, pero si el audio suena como si estuvieras encerrado en un baño, la gente hará scroll en el primer segundo. El secreto del audio profesional no es comprar el equipo más caro, sino entender cómo viaja el sonido.</p>
+            <p><strong>La regla de oro:</strong> El micrófono debe estar lo más cerca posible de la boca sin que salga en el encuadre. Si usas el micrófono integrado de tu celular desde dos metros de distancia, grabarás más el rebote del sonido en las paredes (el famoso "eco" o reverberación) que tu propia voz.</p>
+
+            <h3>2. Hackeando la Acústica (Soluciones Analógicas)</h3>
+            <p>Antes de buscar "filtros mágicos con IA" para limpiar tu audio, resuelve el problema en el mundo físico. Las superficies duras (paredes desnudas, pisos de baldosa) rebotan el sonido. Las superficies blandas (cortinas, alfombras, cobijas) lo absorben.</p>
+            <ul>
+              <li><strong>El truco del clóset:</strong> Muchos creadores profesionales graban sus voces en off (voice-overs) metidos literalmente en su clóset. La ropa absorbe el eco y te da un sonido de estudio o "cabina seca".</li>
+              <li><strong>Direccionalidad:</strong> Asegúrate de saber dónde está el micrófono de tu celular (suele estar en el borde inferior) y háblale directamente a él, no a la pantalla.</li>
+            </ul>
+          `
+        },
+        {
+          tabTitle: 'Voz y Presencia',
+          contentHTML: `
+            <h3>1. El flow nace en el diafragma</h3>
+            <p>Piensa en los buenos raperos o en tus narradores favoritos. ¿Cómo logran soltar rimas o textos largos sin quedarse sin aire ni sonar ahogados? No hablan desde la garganta; proyectan la voz desde el <strong>diafragma</strong> (el músculo debajo de los pulmones).</p>
+            <p>Si hablas solo con la garganta, tu voz se vuelve aguda, tensa y delata nerviosismo. Nuestro cerebro detecta esas "microexpresiones" vocales de inmediato y la audiencia desconecta. Si respiras profundo, inflas el estómago y empujas el aire desde abajo, tu voz gana graves, peso y una autoridad natural.</p>
+
+            <h3>2. El Silencio también se edita</h3>
+            <p>El error número uno al grabar es hablar de corrido como una ametralladora por miedo a equivocarse. ¡Relájate! Estás en un set, no transmitiendo en vivo.</p>
+            <ul>
+              <li><strong>Haz pausas conscientes:</strong> Termina una frase. Cierra la boca. Respira. Empieza la siguiente. Esa pausa limpia te salvará la vida en la sala de edición para hacer cortes invisibles.</li>
+              <li><strong>La postura suena:</strong> Aunque estés grabando solo audio, la tensión de tu cuerpo se nota en la voz. Si sonríes levemente y mantienes una postura abierta, cambia por completo la "temperatura" y la empatía de tu narración.</li>
+            </ul>
+          `,
+          audioTasks: [
+            {
+              instruction: 'Reto 1/5: Escucha el siguiente clip con auriculares. ¿Cuál es el error técnico principal de esta toma?',
+              audioSrc: './audio/reto1.mp3',
+              options: ['Saturación por gritar muy cerca', 'Reverberación (Eco) por grabar lejos en cuarto vacío', 'Falta de respiración'],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Escucha bien. El volumen no está roto, pero la voz rebota mucho.',
+              feedbackSuccess: '¡Queda! 🎥 Exacto. Grabar de lejos en un espacio con superficies duras arruina el audio.'
+            },
+            {
+              instruction: 'Reto 2/5: Dale play a este segundo clip. ¿Por qué duele escucharlo?',
+              audioSrc: './audio/reto2.mp3',
+              options: ['Clipping (Saturación) por volumen excesivo', 'Mucho eco de fondo', 'El micrófono está apagado'],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 No hay eco. El problema es que el sonido está distorsionado por la fuerza.',
+              feedbackSuccess: '¡Queda! 🎥 Así es. Si la onda choca con el límite (clipping), el audio se rompe y no se puede arreglar en edición.'
+            },
+            {
+              instruction: 'Reto 3/5: Escucha las consonantes de este clip. ¿Qué está pasando?',
+              audioSrc: './audio/reto3.mp3',
+              options: ['Popeo / Plosivas fuertes golpeando el micro', 'Se escucha el tráfico de la calle', 'La voz está muy aguda'],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 Concéntrate en las "P" y las "B".',
+              feedbackSuccess: '¡Queda! 🎥 Correcto. El viento de las plosivas golpea el micrófono. Se arregla hablando ligeramente de lado o con un filtro.'
+            },
+            {
+              instruction: 'Reto 4/5: Análisis no verbal. Escucha la interpretación de este creador. ¿Qué le pasa?',
+              audioSrc: './audio/reto4.mp3',
+              options: ['Tiene un excelente uso del diafragma', 'Usa demasiadas pausas', 'Habla desde la garganta, se oye ahogado y tenso'],
+              correctIndex: 2,
+              feedbackWrong: '¡Corte! 🎬 Escucha cómo se le acaba el aire a mitad de frase. Hay tensión.',
+              feedbackSuccess: '¡Queda! 🎥 Tienes oído clínico. La tensión vocal delata falta de respiración diafragmática.'
+            },
+            {
+              instruction: 'Reto 5/5 (Jefe Final): ¿Cómo clasificarías esta última toma?',
+              audioSrc: './audio/reto5.mp3',
+              options: ['Tiene demasiado eco', 'Audio seco, buena presencia y respiración controlada', 'Está saturado en los graves'],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Dale play de nuevo. Es un audio limpio.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Oído de productor! Este es el estándar de calidad que debes buscar en tus videos.'
+            }
+          ]
+        },
+        {
+          tabTitle: 'Vox Populi',
+          contentHTML: `
+            <h3>1. El reportero de pasillo</h3>
+            <p>El formato "Vox Populi" (la voz del pueblo) es uno de los estilos más virales hoy en día. Consiste en hacer preguntas rápidas e inesperadas a la gente en la calle. Para que funcione, la acústica del entorno es tu mayor enemigo.</p>
+            <ul>
+              <li><strong>Cuidado con el ruido ambiente:</strong> El timbre del descanso o el bullicio del patio le dan vida a la toma, pero no pueden ahogar la voz de tu entrevistado. Ubícate estratégicamente.</li>
+              <li><strong>Control del micrófono:</strong> Si entrevistas a un compañero o docente, asegúrate de acercar el teléfono a su boca cuando hable, y regresarlo a la tuya cuando preguntes. Es como un partido de ping-pong sonoro.</li>
+            </ul>
+            
+            <h3>2. La Pregunta Abierta</h3>
+            <p>Nunca hagas preguntas que se respondan con "Sí" o "No". Diseña preguntas que obliguen a la otra persona a contar una mini-historia o dar una opinión fuerte.</p>
+          `,
+          textTasks: [
+            {
+              instruction: 'Reto 1/5: La misión comienza. Tienes la cámara lista y ves a un compañero. ¿Cómo te acercas para romper el hielo?',
+              scenario: 'El compañero está mirando su celular, parece un poco aburrido.',
+              options: [
+                '"Hola, ¿te puedo hacer unas preguntas para un trabajo del laboratorio?"',
+                '"¡Ey! Tú que siempre estás enterado de todo, sácame de una duda rápida..."'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Sonaste a encuesta obligatoria. Ya lo perdiste. Apela a su curiosidad.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Excelente! Generaste intriga y le diste importancia. Bajó la guardia.'
+            },
+            {
+              instruction: 'Reto 2/5: Te prestó atención. Ahora debes soltar la primera pregunta sobre el colegio.',
+              scenario: 'Tu objetivo es que te dé una respuesta larga y jugosa, no un simple "Sí".',
+              options: [
+                '"Si pudieras eliminar una sola regla del colegio mañana mismo, ¿cuál sería y por qué?"',
+                '"¿Estás de acuerdo con el manual de convivencia actual?"'
+              ],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 Te va a responder "No" y habrá un silencio total. Evita preguntas cerradas.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Muy bien! Lo obligaste a pensar y a construir una mini-historia.'
+            },
+            {
+              instruction: 'Reto 3/5: El compañero se ríe y te dice: "Uy, eliminaría la de los uniformes... la semana pasada me pasó algo loquísimo con eso".',
+              scenario: 'Se queda callado esperando tu reacción.',
+              options: [
+                '"Ah, qué bien. Bueno, la siguiente pregunta es..."',
+                '"¡No me dejes con la intriga! ¿Qué te pasó la semana pasada?"'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Ignoraste el gancho que te acaba de dar. Pareces un robot leyendo un guion.',
+              feedbackSuccess: '¡Queda! 🎥 Tienes instinto de periodista. Enganchaste la historia natural.'
+            },
+            {
+              instruction: 'Reto 4/5: Te empieza a contar la historia, pero de repente duda, mira hacia arriba y hace una pausa de tres segundos.',
+              scenario: 'Parece que está recordando un detalle clave.',
+              options: [
+                'Mantienes el micrófono firme, asientes con la cabeza y dejas que el silencio fluya.',
+                'Lo interrumpes de inmediato para hacer otra pregunta y evitar el silencio.'
+              ],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 Cortaste su hilo de pensamiento. La ansiedad te ganó. Los silencios son valiosos.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Bien jugado! Esa presión amable y silenciosa hizo que soltara el remate.'
+            },
+            {
+              instruction: 'Reto 5/5 (Jefe Final): ¡Lo lograste! Te dio una respuesta increíble y súper graciosa que se hará viral. ¿Cómo cierras la toma?',
+              scenario: 'Debes cortar la grabación sin dañar la energía de la interacción.',
+              options: [
+                '"Bueno, gracias, chao."',
+                '"¡Tremenda historia! Ojalá coordinación no vea esto... ¡Gracias hermano!"'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Cierre frío y cortante. Arruinaste el buen momento.',
+              feedbackSuccess: '¡Queda! 🎥 Cierre alto, empático y perfecto para el corte de edición. ¡Entrevista salvada!'
+            }
+          ]
+        },
+        {
+          tabTitle: 'Corte y Limpieza',
+          contentHTML: `
+            <h3>1. Tijera implacable en CapCut</h3>
+            <p>Nadie habla perfecto en la primera toma. Todo el mundo duda, respira fuerte o usa muletillas ("ehhh", "este..."). Aquí es donde ocurre la magia de la edición de audio.</p>
+            <p>Al importar tu clip de audio a CapCut, verás la forma de onda (las montañitas de sonido). Donde la línea es plana, hay silencio. Usa la herramienta de <strong>Dividir</strong> para cortar y eliminar esos baches muertos. Tu objetivo es que la frase fluya con un ritmo dinámico y sin pausas raras.</p>
+
+            <h3>2. Nivelación y Música</h3>
+            <p>Si vas a usar una pista musical de fondo para darle "mood" a tu entrevista, asegúrate de bajarle el volumen dramáticamente (usualmente entre un 10% y un 15%). La música debe acompañar, nunca competir con la voz principal.</p>
+          `,
+          audioTasks: [
+            {
+              instruction: 'Reto 1/5: Escucha este audio importado a tu línea de tiempo. ¿Qué problema evidente tiene?',
+              audioSrc: './audio/capcut1.mp3',
+              options: [
+                'Falta aplicar la herramienta Dividir para eliminar un silencio muerto muy largo.',
+                'Está saturado y lastima los oídos.',
+                'Tiene demasiado eco de fondo.'
+              ],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 Escucha ese espacio vacío en la mitad. En TikTok, un segundo de silencio es una eternidad.',
+              feedbackSuccess: '¡Queda! 🎥 Exacto. Un corte rápido en el silencio recupera el ritmo del video.'
+            },
+            {
+              instruction: 'Reto 2/5: El creador de este audio intentó limpiar los silencios. ¿Qué hizo mal?',
+              audioSrc: './audio/capcut2.mp3',
+              options: [
+                'La música de fondo está muy alta.',
+                'El corte fue tan agresivo que se comió la respiración y la última sílaba de la palabra.',
+                'El audio está desfasado del video.'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Escucha cómo suena como un robot cortado. No le dio aire a la frase.',
+              feedbackSuccess: '¡Queda! 🎥 Tienes buen oído. Hay que limpiar los baches, pero dejando un milisegundo de aire natural.'
+            },
+            {
+              instruction: 'Reto 3/5: Se añadió una pista musical épica de fondo. ¿Cuál es el veredicto?',
+              audioSrc: './audio/capcut3.mp3',
+              options: [
+                'La mezcla está perfecta.',
+                'Hay que bajar la música drásticamente (al 10-15%) porque compite y tapa la voz principal.',
+                'Hay que subirle más a la música.'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Es imposible entender lo que dice el locutor con esa música tan alta.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Correcto! La música acompaña, no protagoniza. El audio de voz siempre manda.'
+            },
+            {
+              instruction: 'Reto 4/5: Escucha este fragmento de entrevista cruda. ¿Qué herramienta de CapCut salvará esta toma?',
+              audioSrc: './audio/capcut4.mp3',
+              options: [
+                'Herramienta Dividir: para aislar y borrar todos los "ehhh" y "mmm" del entrevistado.',
+                'Añadir un efecto de distorsión de voz.',
+                'Subir el volumen al 200%.'
+              ],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 Esa no es la solución. Escucha cuántas muletillas tiene el hablante.',
+              feedbackSuccess: '¡Queda! 🎥 Exacto. Eres un cirujano: aíslas la muletilla con dos cortes, la borras, y unes los fragmentos sanos.'
+            },
+            {
+              instruction: 'Reto 5/5 (Jefe Final): Evalúa esta edición final antes de exportar.',
+              audioSrc: './audio/capcut5.mp3',
+              options: [
+                'El volumen de la música está compitiendo con la voz.',
+                'Mezcla perfecta: voz clara, sin silencios incómodos y con una cama musical leve.',
+                'Tiene baches de silencio que aburren.'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Vuelve a escuchar con calma. Es un trabajo de edición impecable.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Oído de productor! Este es el estándar de calidad para exportar tus proyectos.'
+            }
+          ]
+        }
+      ],
+      teaser: 'El sonido es la mitad de la película. Hoy grabamos con los oídos.',
+      mission: 'Una imagen perfecta con mal audio arruina cualquier producción. Captura paisajes sonoros, diseña un Vox Populi empático con un compañero, y limpia los baches en CapCut. Sube tu clip optimizado al Padlet.',
+      objectives: [
+        'Grabar un banco de audios del entorno escolar (timbre, pasos, patio)',
+        'Aplicar el árbol de diálogo para entrevistas orgánicas',
+        'Limpiar muletillas y nivelar música usando CapCut'
+      ]
+    },
+    {
+      id: 3,
+      phase: 3,
+      name: 'Narrativa en 30 Segundos',
+      icon: 'clapper',
+      accent: 'teal',
+      modules: [
+        {
+          tabTitle: 'El Gancho',
+          contentHTML: `
+            <h3>1. Los primeros 3 segundos</h3>
+            <p>En TikTok o Reels, la audiencia decide si se queda o se va antes de que termines de respirar. Si empiezas con "Hola a todos, hoy les voy a contar...", ya perdiste al 80% de las personas.</p>
+            <p>El <strong>Gancho (Hook)</strong> es una promesa visual o auditiva directa al cerebro. Debe generar curiosidad, plantear un problema o romper un patrón visual de inmediato.</p>
+            
+            <h3>2. Estructura de 3 Actos para Shorts</h3>
+            <ul>
+              <li><strong>Acto 1 (El Gancho):</strong> 3 segundos. ¿Por qué debería importarme?</li>
+              <li><strong>Acto 2 (El Desarrollo):</strong> 20 segundos. Entrega el valor rápido, sin rodeos, usando cortes dinámicos.</li>
+              <li><strong>Acto 3 (El Cierre/CTA):</strong> 7 segundos. Remate de la historia y el llamado a la acción ("Guarda este video", "Comenta tu opinión").</li>
+            </ul>
+          `,
+          textTasks: [
+            {
+              instruction: 'Reto 1/3: Estás escribiendo el guion para un video sobre fotografía con celular. Elige tu primera frase.',
+              scenario: 'Tu video trata sobre cómo tomar mejores fotos de noche.',
+              options: [
+                'Hola chicos, bienvenidos a un nuevo video de mi canal...',
+                '3 errores fatales que arruinan tus fotos nocturnas.',
+                'Hoy vamos a hablar de la exposición en la fotografía...'
+              ],
+              correctIndex: 1,
+              feedbackWrong: '¡Corte! 🎬 Perdiste a tu audiencia. La curva de retención cayó a cero. Sé directo.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Excelente! Fuiste directo al grano y generaste curiosidad.'
+            },
+            {
+              instruction: 'Reto 2/3: Ya tienes la atención. ¿Cómo continúas la historia?',
+              scenario: 'Debes explicar un truco técnico sobre el enfoque.',
+              options: [
+                'Dar el truco inmediatamente de forma visual y rápida.',
+                'Explicar la historia de cómo descubriste el truco ayer.',
+                'Pedirles que se suscriban antes de revelar el truco.'
+              ],
+              correctIndex: 0,
+              feedbackWrong: '¡Corte! 🎬 Mucho rodeo. En formato corto, el contexto excesivo aburre.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Pum! Valor entregado al instante. Mantienes el ritmo alto.'
+            },
+            {
+              instruction: 'Reto 3/3 (Jefe Final): Tienes que elegir un título de texto para la portada de tu video.',
+              scenario: 'Tu video da 2 tips reales de iluminación.',
+              options: [
+                'Este es el mayor secreto de Hollywood (NUNCA REVELADO)',
+                'Tips de luz',
+                '2 trucos de luz que cambiarán tus videos'
+              ],
+              correctIndex: 2,
+              feedbackWrong: '¡Corte! 🎬 O es muy aburrido, o es una mentira descarada que enojará a la audiencia.',
+              feedbackSuccess: '¡Queda! 🎥 Una promesa atractiva, clara y que puedes cumplir. ¡Aprobado!'
+            }
+          ]
+        },
+        {
+          tabTitle: 'La Guillotina (Ritmo)',
+          contentHTML: `
+            <h3>La Guillotina del Tiempo</h3>
+            <p>Saber qué decir es la mitad del trabajo. La otra mitad es saber <strong>cuánto tiempo</strong> dedicarle. En formatos de 30 segundos, eres un cirujano del tiempo. Cada segundo que le dediques a una introducción aburrida, se lo estás robando al remate de tu historia.</p>
+            <p>A esto se le llama "Pacing" o ritmo. Vamos a probar tu intuición de edición administrando tu presupuesto de segundos.</p>
+          `,
+          calibrationTasks: [
+            {
+              instruction: 'Reto 1/2: En un video de 30s, ¿cuántos segundos exactos le asignarías al Gancho inicial?',
+              filterType: '', 
+              unit: 's',
+              minRange: 1, 
+              maxRange: 30, 
+              sweetSpot: [2, 4],
+              feedbackTooLow: '¡Corte! 🎬 Es tan rápido que ni siquiera se entendió de qué trata el video.',
+              feedbackTooHigh: '¡Corte! 🎬 Gastaste demasiado tiempo introduciendo. La gente ya hizo scroll. Bájale los segundos.',
+              feedbackSuccess: '¡Queda! 🎥 Perfecto. Entre 2 y 4 segundos es el ritmo ideal para atrapar sin aburrir.'
+            },
+            {
+              instruction: 'Reto 2/2 (Jefe Final): Tu historia principal terminó. ¿Cuántos segundos asignas para despedirte y pedir interacciones (Call to Action)?',
+              filterType: '', 
+              unit: 's',
+              minRange: 1, 
+              maxRange: 15, 
+              sweetSpot: [3, 5],
+              feedbackTooLow: '¡Corte! 🎬 Cortaste el video antes de que pudieran leer o entender qué querías que hicieran.',
+              feedbackTooHigh: '¡Corte! 🎬 Un cierre de más de 6 segundos mata la retención final del video. ¡Sé rápido!',
+              feedbackSuccess: '¡Queda! 🎥 Precisión de editor. Rápido, claro y efectivo. ¡Módulo superado!'
+            }
+          ]
+        },
+        {
+          tabTitle: 'Rodaje en Bloques',
+          contentHTML: `
+            <h3>1. El cine no se graba en orden</h3>
+            <p>Un error común de principiante es intentar grabar el guion de principio a fin de forma cronológica. Los profesionales graban por <strong>bloques de locación o iluminación</strong>.</p>
+            <p>Si la escena 1 y la escena 5 suceden en el patio del colegio, grábalas al mismo tiempo. Esto te ahorra horas de mover equipos y evita que la luz del sol cambie y arruine tu continuidad visual (el famoso "raccord").</p>
+          `,
+          orderTasks: [
+            {
+              instruction: 'Reto 1/5: Tienes los equipos armados en el Salón. Ordena la grabación para mover la cámara lo menos posible.',
+              items: ['Escena 3 (Patio)', 'Escena 1 (Salón)', 'Escena 5 (Patio)'],
+              correctOrder: ['Escena 1 (Salón)', 'Escena 3 (Patio)', 'Escena 5 (Patio)'],
+              feedbackWrong: '¡Corte! 🎬 Estás yendo y viniendo. Agrupa las escenas del patio juntas.',
+              feedbackSuccess: '¡Queda! 🎥 Ahorraste tiempo valioso agrupando por locación.'
+            },
+            {
+              instruction: 'Reto 2/5: Vas a grabar en exteriores. Ordena cronológicamente para no perder la luz.',
+              items: ['Grabación al atardecer', 'Grabación al amanecer', 'Grabación al mediodía'],
+              correctOrder: ['Grabación al amanecer', 'Grabación al mediodía', 'Grabación al atardecer'],
+              feedbackWrong: '¡Corte! 🎬 Estás viajando en el tiempo. Ordena de mañana a tarde.',
+              feedbackSuccess: '¡Queda! 🎥 Perfecto. La luz natural dicta tu plan de rodaje.'
+            },
+            {
+              instruction: 'Reto 3/5: Vas a grabar un diálogo en una locación. Ordena los planos de lo más amplio a lo más cerrado.',
+              items: ['Plano Medio (Cintura)', 'Plano Detalle (Ojos)', 'Plano General (El lugar)'],
+              correctOrder: ['Plano General (El lugar)', 'Plano Medio (Cintura)', 'Plano Detalle (Ojos)'],
+              feedbackWrong: '¡Corte! 🎬 Siempre se establece primero el espacio general antes de ir a los detalles.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Exacto! Eso asegura que la continuidad tenga sentido.'
+            },
+            {
+              instruction: 'Reto 4/5: Tienes dos actores (A y B). El Actor A tiene permiso de irse temprano. Ordena las escenas.',
+              items: ['Escena solo con Actor B', 'Escena con Actor A y B', 'Escena solo con Actor A'],
+              correctOrder: ['Escena con Actor A y B', 'Escena solo con Actor A', 'Escena solo con Actor B'],
+              feedbackWrong: '¡Corte! 🎬 El Actor A se fue y no alcanzaste a grabar sus escenas. Graba primero todo lo que lo involucre.',
+              feedbackSuccess: '¡Queda! 🎥 Muy bien. Liberaste al actor a tiempo y te quedaste grabando solo con el disponible.'
+            },
+            {
+              instruction: 'Reto 5/5 (Jefe Final): Combina locación y luz para hacer el plan más eficiente.',
+              items: ['Patio (Exterior Noche)', 'Patio (Exterior Día)', 'Salón (Interior Día)'],
+              correctOrder: ['Salón (Interior Día)', 'Patio (Exterior Día)', 'Patio (Exterior Noche)'],
+              feedbackWrong: '¡Corte! 🎬 Revisa el flujo del tiempo y el movimiento de equipos.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Tienes mente de Productor Ejecutivo! Módulo superado.'
+            }
+          ]
+        },
+        {
+          tabTitle: 'Subtítulos y Exportación',
+          contentHTML: `
+            <h3>El Toque Final</h3>
+            <p>Editar el video es solo el 80% del trabajo. El último 20% es adaptar tu video a la interfaz de las redes sociales (UI). Un video brillante fracasa si los subtítulos son ilegibles o si lo exportas con una configuración que Instagram o TikTok compriman hasta pixelarlo.</p>
+          `,
+          calibrationTasks: [
+            {
+              instruction: 'Reto 1/5: Desliza para posicionar el subtítulo verticalmente en la pantalla. 0 es arriba, 100 es abajo.',
+              filterType: '', 
+              unit: '%',
+              minRange: 0, 
+              maxRange: 100, 
+              sweetSpot: [60, 75],
+              feedbackTooLow: '¡Corte! 🎬 Muy arriba, tapa la cara del creador.',
+              feedbackTooHigh: '¡Corte! 🎬 Muy abajo, los botones de "Me gusta" y la descripción taparán el texto.',
+              feedbackSuccess: '¡Queda! 🎥 Zona segura perfecta (Centro-Inferior).'
+            },
+            {
+              instruction: 'Reto 2/5: El fondo es muy claro. Ajusta la opacidad de la sombra del texto para que sea legible.',
+              filterType: '', 
+              unit: '%',
+              minRange: 0, 
+              maxRange: 100, 
+              sweetSpot: [80, 100],
+              feedbackTooLow: '¡Corte! 🎬 No se lee nada, el texto se pierde con el fondo brillante.',
+              feedbackTooHigh: '¡Corte! 🎬 Ajusta un poco.',
+              feedbackSuccess: '¡Queda! 🎥 Legibilidad perfecta. Nadie tendrá que forzar los ojos.'
+            },
+            {
+              instruction: 'Reto 3/5: ¿Cuántas palabras máximo debes dejar en pantalla por cada subtítulo para no cansar a la audiencia?',
+              filterType: '', 
+              unit: ' palabras',
+              minRange: 1, 
+              maxRange: 20, 
+              sweetSpot: [3, 5],
+              feedbackTooLow: '¡Corte! 🎬 Poner 1 palabra por pantalla es demasiado epiléptico y marea.',
+              feedbackTooHigh: '¡Corte! 🎬 Párrafos largos dan pereza visual en redes sociales. ¡Reduce la cantidad!',
+              feedbackSuccess: '¡Queda! 🎥 Es el bloque visual exacto que el ojo humano lee de un vistazo rápido.'
+            },
+            {
+              instruction: 'Reto 4/5: Ajusta la resolución ideal de exportación para Reels/TikTok.',
+              filterType: '', 
+              unit: 'p',
+              minRange: 480, 
+              maxRange: 4000, 
+              sweetSpot: [1000, 1100],
+              feedbackTooLow: '¡Corte! 🎬 Demasiado bajo, se verá pixelado.',
+              feedbackTooHigh: '¡Corte! 🎬 Exportar en 4K es un mito. La red social lo comprimirá a la fuerza y se verá peor.',
+              feedbackSuccess: '¡Queda! 🎥 1080p es la resolución nativa perfecta para que el algoritmo no te comprima.'
+            },
+            {
+              instruction: 'Reto 5/5 (Jefe Final): Ajusta la tasa de Fotogramas por Segundo (FPS) correcta.',
+              filterType: '', 
+              unit: ' FPS',
+              minRange: 12, 
+              maxRange: 120, 
+              sweetSpot: [30, 60],
+              feedbackTooLow: '¡Corte! 🎬 Se verá como una película vieja a saltos.',
+              feedbackTooHigh: '¡Corte! 🎬 Demasiados cuadros, los celulares normales se trabarán reproduciéndolo.',
+              feedbackSuccess: '¡Queda! 🎥 30 o 60 FPS te dará esa fluidez profesional. ¡Proyecto listo para exportar!'
+            }
+          ]
+        }
+      ],
+      teaser: 'Rodaje, edición y publicación: organiza el caos para brillar en pantalla.',
+      mission: 'Organiza la logística de tu rodaje usando bloques eficientes. Luego, aplica subtítulos dinámicos a tu video en CapCut y expórtalo en 1080p a 30fps. Súbelo al Padlet.',
+      objectives: [
+        'Optimizar el rodaje agrupando por locación y luz',
+        'Posicionar y estilizar subtítulos en la "Zona Segura"',
+        'Dominar las especificaciones técnicas de exportación'
+      ]
+    },
+    {
+      id: 4,
+      phase: 4,
+      name: 'La Muestra Final',
+      icon: 'folder',
+      accent: 'orange',
+      modules: [
+        {
+          tabTitle: 'Curaduría y Selección',
+          contentHTML: `
+            <h3>1. Matar a tus darlings</h3>
+            <p>En el cine hay una frase famosa: <em>"Kill your darlings"</em> (Mata a tus favoritos). Significa que, como creador, a veces tienes que eliminar de tu proyecto final esa toma que te costó horas grabar, si no aporta a la historia general o no tiene la calidad suficiente.</p>
+            <p>En esta etapa debes revisar todo tu material del semestre con ojo crítico. Selecciona únicamente la mejor fotografía, el mejor paisaje sonoro y el mejor video vertical que hayas creado. La calidad es más importante que la cantidad.</p>
+            
+            <h3>2. La Justificación de Obra</h3>
+            <p>El arte no se explica solo. Prepara un pequeño párrafo (3 a 4 líneas) donde expliques qué querías transmitir con tu pieza elegida. ¿Por qué usaste luz dura? ¿Por qué ese encuadre? Un creador digital debe saber defender sus decisiones creativas.</p>
+          `,
+          calibrationTasks: [
+            {
+              instruction: 'Reto 1/1 (El Corte Preciso): Tienes un clip en bruto de 12 segundos. Durante los primeros 4 segundos, el camarógrafo tiembla y alguien tose. Ajusta el deslizador para marcar el segundo exacto donde debes hacer el corte (In-Point) para que el video empiece con fuerza.',
+              filterType: '', 
+              unit: 's',
+              minRange: 0, 
+              maxRange: 12, 
+              sweetSpot: [4, 5],
+              feedbackTooLow: '¡Corte! 🎬 Aún se escucha la tos y se ve el temblor. Corta más adelante.',
+              feedbackTooHigh: '¡Corte! 🎬 Te comiste la primera palabra del actor o la acción clave. Regresa un poco.',
+              feedbackSuccess: '¡Queda! 🎥 Corte limpio. Iniciaste justo en la acción y eliminaste la basura audiovisual.'
+            }
+          ]
+        },
+        {
+          tabTitle: 'Ensamblaje',
+          contentHTML: `
+            <h3>1. El máster de proyección</h3>
+            <p>Para la Premiere del laboratorio, no podemos tener 30 memorias USB distintas ni estar conectando celulares al proyector. Toda la muestra debe consolidarse en un solo archivo máster.</p>
+            <ul>
+              <li><strong>Nivelación global:</strong> Al unir los videos de todos los compañeros, debemos asegurarnos de que el volumen general sea el mismo. No queremos que un video suene muy bajo y el siguiente reviente los parlantes.</li>
+              <li><strong>Transiciones limpias:</strong> Colocaremos pantallas en negro (fundidos) de 2 segundos entre cada proyecto para darle tiempo a la audiencia de procesar lo que acaba de ver antes de pasar al siguiente creador.</li>
+            </ul>
+          `,
+          orderTasks: [
+            {
+              instruction: 'Reto 1/1 (El Archivo Máster): Eres el encargado de exportar el archivo único que se proyectará en el auditorio del colegio. Organiza los clips para que la presentación fluya como un evento profesional.',
+              items: [
+                'Cortometraje Grupo 2', 
+                'Créditos Finales y Agradecimientos', 
+                'Cortinilla de Inicio (Logo del Lab)', 
+                'Transición: Pantalla Negra de Descanso (2s)', 
+                'Cortometraje Grupo 1'
+              ],
+              correctOrder: [
+                'Cortinilla de Inicio (Logo del Lab)', 
+                'Cortometraje Grupo 1', 
+                'Transición: Pantalla Negra de Descanso (2s)', 
+                'Cortometraje Grupo 2', 
+                'Créditos Finales y Agradecimientos'
+              ],
+              feedbackWrong: '¡Corte! 🎬 Revisa el orden. Recuerda que no puedes pegar dos videos distintos de golpe porque mareas a la audiencia. Usa el fundido a negro como respiro entre ellos.',
+              feedbackSuccess: '¡Queda! 🎥 ¡Excelente! Un archivo máster fluido y listo para el proyector.'
+            }
+          ]
+        },
+        {
+          tabTitle: 'La Premiere',
+          contentHTML: `
+            <h3>1. El estreno oficial</h3>
+            <p>Llegó el momento de ver tu trabajo en pantalla grande. Esta no es una entrega de calificaciones tradicional, es la Premiere de tu primer laboratorio como creador audiovisual.</p>
+            <p>Durante la proyección, presta atención al trabajo de tus compañeros. El objetivo es realizar comentarios constructivos: reconocer un buen encuadre, aplaudir una mezcla de audio limpia, o sugerir cómo mejorar un gancho narrativo.</p>
+            <p><strong>¡Felicitaciones!</strong> Has pasado de consumidor pasivo de contenido a Creador Digital.</p>
+          `,
+          orderTasks: [
+            {
+              instruction: 'Reto 1/1 (El Sándwich de Feedback): El video de un compañero tiene un gancho increíble, pero el audio quedó saturado. Frente al salón, arma tu crítica constructiva ordenando tus frases (Positivo -> Mejora -> Positivo).',
+              items: [
+                '"Aun así, visualmente es el mejor trabajo que he visto hoy. ¡Gran esfuerzo!"', 
+                '"Para la próxima, ten cuidado con la distancia del micrófono, la saturación distrae un poco."', 
+                '"Me encantó cómo estructuraste el guion, el gancho me atrapó de inmediato."'
+              ],
+              correctOrder: [
+                '"Me encantó cómo estructuraste el guion, el gancho me atrapó de inmediato."', 
+                '"Para la próxima, ten cuidado con la distancia del micrófono, la saturación distrae un poco."', 
+                '"Aun así, visualmente es el mejor trabajo que he visto hoy. ¡Gran esfuerzo!"'
+              ],
+              feedbackWrong: '¡Corte! 🎬 Entraste atacando el error o cerraste mal. La persona se pondrá a la defensiva y no escuchará. Corrige el orden.',
+              feedbackSuccess: '¡Queda! 🎥 Demostraste gran inteligencia emocional. Crítica profesional, clara y sin herir susceptibilidades. ¡Has completado el Laboratorio!'
+            }
+          ]
+        }
+      ],
+      teaser: 'Llegó el momento de apagar las luces y proyectar tu visión al mundo.',
+      mission: 'Selecciona meticulosamente tu mejor trabajo del semestre (curaduría), prepara tu justificación artística y entrega tus archivos finales para el ensamblaje general. ¡Nos vemos en la alfombra roja del salón!',
+      objectives: [
+        'Realizar la curaduría del material fotográfico, sonoro y de video',
+        'Consolidar los proyectos en un archivo máster de proyección',
+        'Participar en la evaluación cualitativa durante el estreno'
+      ]
+    }
+  ];
+
+  /* ================================================================
+     PROGRESO (localStorage)
+     ================================================================ */
+  function readIdList(key){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){
+      return [];
+    }
+  }
+  function writeIdList(key, ids){
+    try{
+      localStorage.setItem(key, JSON.stringify(ids));
+    }catch(e){
+      /* localStorage no disponible (modo privado, etc.): el progreso
+         simplemente no persistirá, pero la app sigue funcionando */
+    }
+  }
+
+  function getProfile(){
+    try{
+      const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      return null;
+    }
+  }
+  function saveProfile(name, username){
+    try{
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify({ name: name, username: username }));
+    }catch(e){
+      /* sin localStorage no podemos recordar el perfil entre sesiones,
+         pero el onboarding ya se completó para esta sesión */
+    }
+  }
+
+  function hasVictoryBeenSeen(){
+    try{
+      return localStorage.getItem(VICTORY_SEEN_KEY) === 'true';
+    }catch(e){
+      return false;
+    }
+  }
+  function markVictorySeen(){
+    try{
+      localStorage.setItem(VICTORY_SEEN_KEY, 'true');
+    }catch(e){
+      /* best effort */
+    }
+  }
+
+  function isCompleted(id){ return readIdList(COMPLETED_STORAGE_KEY).includes(id); }
+  function markCompleted(id){
+    const ids = readIdList(COMPLETED_STORAGE_KEY);
+    if(!ids.includes(id)) ids.push(id);
+    writeIdList(COMPLETED_STORAGE_KEY, ids);
+  }
+
+  function moduleKey(phaseId, moduleIndex){ return phaseId + '-' + moduleIndex; }
+
+  /* Name kept as requested — now checks for a non-empty calibrationTasks
+     array instead of the old multiple-choice quiz array. A module
+     flagged module.locked still counts here on purpose: while it's
+     locked nobody can reach its tasks to pass them, so the phase stays
+     "Requiere Teoría" and every later phase stays locked too — that's
+     the intended effect (don't let students skip ahead of a topic that
+     just hasn't been taught yet). Un-flagging the module once its week
+     arrives lets it be completed normally, unblocking the chain. */
+  function hasModuleQuiz(module){
+    const hasCalibration = Array.isArray(module.calibrationTasks) && module.calibrationTasks.length > 0;
+    const hasAudio = Array.isArray(module.audioTasks) && module.audioTasks.length > 0;
+    const hasText = Array.isArray(module.textTasks) && module.textTasks.length > 0;
+    const hasOrder = Array.isArray(module.orderTasks) && module.orderTasks.length > 0;
+    return hasCalibration || hasAudio || hasText || hasOrder;
+  }
+
+  function isCalibrationPassed(phaseId, moduleIndex){
+    return readIdList(MODULE_CALIBRATION_STORAGE_KEY).includes(moduleKey(phaseId, moduleIndex));
+  }
+  function markCalibrationPassed(phaseId, moduleIndex){
+    const key = moduleKey(phaseId, moduleIndex);
+    const keys = readIdList(MODULE_CALIBRATION_STORAGE_KEY);
+    if(!keys.includes(key)) keys.push(key);
+    writeIdList(MODULE_CALIBRATION_STORAGE_KEY, keys);
+  }
+  function hasAnyModuleTask(item){
+    return Array.isArray(item.modules) && item.modules.some(hasModuleQuiz);
+  }
+  /* True if every calibration-bearing module of this phase has been
+     passed. Vacuously true when the phase has no calibration-bearing
+     modules at all — that's what lets a theory-only phase avoid
+     blocking the chain. */
+  function allModuleTasksPassed(item){
+    if(!Array.isArray(item.modules) || !item.modules.length) return true;
+    return item.modules.every((m, i) => !hasModuleQuiz(m) || isCalibrationPassed(item.id, i));
+  }
+
+  /* Dynamic Knowledge Gate — name kept as requested. Phase at `index`
+     is unlocked only if EVERY Prueba de Cámara of EVERY EARLIER phase
+     (0..index-1) has been passed — not just the immediately preceding
+     one. This matters once a phase in the middle of the chain (like
+     Phase 2) has no calibrationTasks of its own: without walking the
+     full chain, allModuleTasksPassed(prevPhase) would vacuously return
+     true for that phase and silently skip over an earlier phase that's
+     still incomplete (e.g. Phase 3 unlocking before Phase 1 is done).
+     First phase always unlocked. Depends ONLY on calibration
+     completion — mission completion never factors in. */
+  function isPrerequisitePassed(index){
+    for(let i = 0; i < index; i++){
+      const prevPhase = ROADMAP_DATA[i];
+      if(!prevPhase) continue;
+      if(!allModuleTasksPassed(prevPhase)) return false;
+    }
+    return true;
+  }
+
+  /* Resuelve el estado visual/interactivo de una fase:
+     bloqueada (fase anterior sin aprobar) > requiere teoría (alguna
+     Prueba de Cámara propia sin aprobar) > completada > normal */
+  function resolveVisualState(item, index){
+    if(!isPrerequisitePassed(index)){
+      return {
+        state:'locked', hex:LOCKED_HEX, icon:'lock',
+        contentEnabled:false, missionEnabled:false,
+        ctaText:'Bloqueada', ctaArrow:''
+      };
+    }
+    if(hasAnyModuleTask(item) && !allModuleTasksPassed(item)){
+      return {
+        state:'gated', hex:GATED_HEX, icon:'quiz',
+        contentEnabled:true, missionEnabled:false,
+        ctaText:'Requiere Teoría', ctaArrow:''
+      };
+    }
+    if(isCompleted(item.id)){
+      return {
+        state:'completed', hex:COMPLETED_HEX, icon:'check',
+        contentEnabled:true, missionEnabled:true,
+        ctaText:'Revisar misión', ctaArrow:'<span class="arrow">→</span>'
+      };
+    }
+    const accent = item.accent || (index % 2 === 0 ? 'teal' : 'orange');
+    return {
+      state:accent, hex:ACCENT_HEX[accent], icon:item.icon,
+      contentEnabled:true, missionEnabled:true,
+      ctaText:'Ver misión', ctaArrow:'<span class="arrow">→</span>'
+    };
+  }
+
+  function buildCardInner(item, index){
+    const vs = resolveVisualState(item, index);
+    const code = 'FASE ' + String(item.phase).padStart(2, '0');
+
+    const contentBtnHtml =
+      '<button type="button" class="card-link"' + (vs.contentEnabled ? '' : ' disabled aria-disabled="true"') + '>' +
+        ICONS.folder + '<span>Ver contenido</span>' +
+      '</button>';
+
+    const html =
+      '<div class="card-thumb accent-' + vs.state + '">' +
+        '<span class="thumb-code">' + code + '</span>' +
+        '<span class="thumb-dot"></span>' +
+        ICONS[vs.icon] +
+      '</div>' +
+      '<div class="card-body">' +
+        '<h3 class="card-title">' + item.name + '</h3>' +
+        '<p class="card-teaser">' + item.teaser + '</p>' +
+        '<div class="card-actions">' +
+          contentBtnHtml +
+          '<span class="card-cta accent-' + vs.state + '">' + vs.ctaText + ' ' + vs.ctaArrow + '</span>' +
+        '</div>' +
+      '</div>';
+
+    return { vs, code, html };
+  }
+
+  /* Wires the "Ver contenido" button after (re)building a card's innerHTML.
+     stopPropagation keeps it fully independent from the card's own
+     "open mission modal" click handler. */
+  function wireContentButton(card, item){
+    const btn = card.querySelector('.card-link');
+    if(btn && !btn.disabled){
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDrawer(item);
+      });
+    }
+  }
+
+  /* ================================================================
+     RENDER
+     ================================================================ */
+  function render(){
+    const track = document.getElementById('roadmap-track');
+    track.innerHTML = '';
+
+    ROADMAP_DATA.forEach((item, i) => {
+      const built = buildCardInner(item, i);
+      const vs = built.vs;
+
+      const node = document.createElement('div');
+      node.className = 'roadmap-node';
+      node.setAttribute('role', 'listitem');
+      node.dataset.nodeId = item.id;
+
+      const rail = document.createElement('div');
+      rail.className = 'rail';
+      const marker = document.createElement('div');
+      marker.className = 'marker' + (vs.state === 'locked' ? ' is-locked' : '');
+      marker.dataset.markerId = item.id;
+      marker.style.setProperty('--accent-color', vs.hex);
+      rail.appendChild(marker);
+
+      const card = document.createElement('div');
+      card.className = 'card' +
+        (vs.state === 'locked' ? ' is-locked' : '') +
+        (vs.state === 'gated' ? ' is-gated' : '');
+      card.dataset.cardId = item.id;
+      card.style.setProperty('--accent-color', vs.hex);
+      card.innerHTML = built.html;
+      wireContentButton(card, item);
+
+      if(vs.missionEnabled){
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-haspopup', 'dialog');
+        card.setAttribute('aria-label', item.name + ' — abrir misión');
+
+        const open = () => openModal(item);
+        card.addEventListener('click', open);
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        });
+      } else {
+        card.setAttribute('aria-disabled', 'true');
+        card.setAttribute('aria-label', item.name +
+          (vs.state === 'locked' ? ' — fase bloqueada' : ' — requiere completar la evaluación'));
+      }
+
+      node.appendChild(rail);
+      node.appendChild(card);
+      track.appendChild(node);
+    });
+
+    observeNodes();
+  }
+
+  /* Actualiza en vivo una sola tarjeta/marcador sin reconstruir todo el
+     track: conserva scroll y animaciones, y desbloquea "Ver misión" al
+     instante si corresponde. */
+  function refreshNode(id){
+    const item = ROADMAP_DATA.find((d) => d.id === id);
+    if(!item) return;
+    const index = ROADMAP_DATA.indexOf(item);
+    const built = buildCardInner(item, index);
+
+    const card = document.querySelector('.card[data-card-id="' + id + '"]');
+    if(card){
+      card.classList.toggle('is-locked', built.vs.state === 'locked');
+      card.classList.toggle('is-gated', built.vs.state === 'gated');
+      card.style.setProperty('--accent-color', built.vs.hex);
+      card.innerHTML = built.html;
+      wireContentButton(card, item);
+
+      /* the mission click handler may need to be (re)attached now that
+         missionEnabled just flipped from false to true */
+      if(built.vs.missionEnabled && card.getAttribute('role') !== 'button'){
+        card.tabIndex = 0;
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-haspopup', 'dialog');
+        card.setAttribute('aria-label', item.name + ' — abrir misión');
+        card.removeAttribute('aria-disabled');
+        const open = () => openModal(item);
+        card.addEventListener('click', open);
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        });
+      }
+    }
+    const marker = document.querySelector('.marker[data-marker-id="' + id + '"]');
+    if(marker){
+      marker.classList.toggle('is-locked', built.vs.state === 'locked');
+      marker.style.setProperty('--accent-color', built.vs.hex);
+    }
+  }
+
+  /* Refreshes every card. Needed after a Prueba de Cámara is passed,
+     since that can unlock the NEXT phase too (Dynamic Knowledge Gate),
+     not just the one card whose module was just calibrated. */
+  function refreshAllNodes(){
+    ROADMAP_DATA.forEach((it) => refreshNode(it.id));
+    updateGlobalProgressBar();
+    checkGlobalCompletion();
+  }
+
+  /* ================================================================
+     PROGRESO GLOBAL — barra de progreso del HUD + pantalla de victoria
+     ================================================================ */
+
+  /* Every module across every phase that carries ANY task array —
+     the same "does this module need to be passed" test hasModuleQuiz
+     already uses, just flattened across the whole roadmap. */
+  function getAllModulesFlat(){
+    const list = [];
+    ROADMAP_DATA.forEach((phaseItem) => {
+      phaseItem.modules.forEach((module, moduleIndex) => {
+        if(hasModuleQuiz(module)){
+          list.push({ phaseId: phaseItem.id, moduleIndex: moduleIndex });
+        }
+      });
+    });
+    return list;
+  }
+
+  function updateGlobalProgressBar(){
+    const fillEl = document.getElementById('hud-progress-fill');
+    const valueEl = document.getElementById('hud-progress-value');
+    const certBtn = document.getElementById('hud-certificate-btn');
+    const allModules = getAllModulesFlat();
+    const total = allModules.length;
+    const passed = allModules.filter((m) => isCalibrationPassed(m.phaseId, m.moduleIndex)).length;
+    const pct = total ? Math.round((passed / total) * 100) : 0;
+
+    if(fillEl) fillEl.style.width = pct + '%';
+    if(valueEl) valueEl.textContent = pct + '%';
+    if(certBtn) certBtn.hidden = !(total > 0 && passed >= total);
+  }
+
+  /* Fires after every module pass (via refreshAllNodes). Once every
+     interactive module in ROADMAP_DATA is passed, shows the
+     Graduation screen exactly once (tracked via VICTORY_SEEN_KEY) —
+     it does not re-interrupt the student on every later visit. A
+     persistent "🎓 Certificado" button (toggled in
+     updateGlobalProgressBar) lets them reopen it afterward on demand. */
+  function checkGlobalCompletion(){
+    const allModules = getAllModulesFlat();
+    const total = allModules.length;
+    if(total === 0) return;
+    const passed = allModules.filter((m) => isCalibrationPassed(m.phaseId, m.moduleIndex)).length;
+    if(passed < total) return;
+    if(hasVictoryBeenSeen()) return;
+    openVictoryScreen();
+  }
+
+  function openVictoryScreen(){
+    closeDrawer();
+    closeModal();
+    const profile = getProfile();
+    document.getElementById('victory-name').textContent = profile ? profile.name : '';
+    document.getElementById('victory-username').textContent = profile ? profile.username : '';
+
+    const dateEl = document.getElementById('victory-date');
+    if(dateEl){
+      const formatted = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+      dateEl.textContent = 'Expedido el ' + formatted;
+    }
+
+    document.getElementById('victory-overlay').classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    markVictorySeen();
+  }
+
+  function closeVictoryScreen(){
+    const overlay = document.getElementById('victory-overlay');
+    if(!overlay.classList.contains('is-open')) return;
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('victory-close').addEventListener('click', closeVictoryScreen);
+  document.getElementById('victory-print').addEventListener('click', () => { window.print(); });
+  document.getElementById('victory-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'victory-overlay') closeVictoryScreen();
+  });
+  document.getElementById('hud-certificate-btn').addEventListener('click', openVictoryScreen);
+
+  /* ================================================================
+     ONBOARDING — pantalla de bienvenida (una sola vez, primera carga)
+     ================================================================ */
+  /* Locks the rest of the app out of the tab order / accessibility tree
+     while the onboarding overlay is open. Without this, the overlay only
+     blocks the app VISUALLY (it sits on top with pointer-events:auto),
+     but a keyboard-only user pressing Tab from a fresh page load would
+     still land on the roadmap cards behind it (they appear earlier in
+     DOM order than the onboarding form) and could open a mission or the
+     Content Drawer without ever completing onboarding. `inert` removes
+     header+main from both focus and screen-reader navigation entirely,
+     so the onboarding form's own inputs become the only reachable
+     controls until it closes. */
+  function setAppInert(isInert){
+    document.querySelectorAll('.hud, .roadmap-wrapper').forEach((el) => {
+      if(isInert){
+        el.setAttribute('inert', '');
+        el.setAttribute('aria-hidden', 'true');
+      } else {
+        el.removeAttribute('inert');
+        el.removeAttribute('aria-hidden');
+      }
+    });
+  }
+
+  function initOnboarding(){
+    const profile = getProfile();
+    if(profile && profile.name && profile.username) return;
+    document.getElementById('onboarding-overlay').classList.add('is-open');
+    setAppInert(true);
+  }
+
+  function submitOnboarding(){
+    const nameInput = document.getElementById('onboarding-name');
+    const userInput = document.getElementById('onboarding-username');
+    const name = nameInput.value.trim();
+    let username = userInput.value.trim();
+
+    if(!name || !username){
+      const card = document.getElementById('onboarding-card');
+      card.classList.remove('is-shake');
+      void card.offsetWidth;
+      card.classList.add('is-shake');
+      return;
+    }
+
+    username = '@' + username.replace(/^@+/, '');
+    saveProfile(name, username);
+
+    const overlay = document.getElementById('onboarding-overlay');
+    overlay.classList.remove('is-open');
+    setAppInert(false);
+  }
+
+  document.getElementById('onboarding-start').addEventListener('click', submitOnboarding);
+  ['onboarding-name', 'onboarding-username'].forEach((id) => {
+    document.getElementById(id).addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); submitOnboarding(); }
+    });
+  });
+
+  /* ================================================================
+     MISSION MODAL
+     ================================================================ */
+  let lastFocusedModal = null;
+  let currentItem = null;
+
+  function openModal(item){
+    closeDrawer(); /* mutual exclusivity: only one overlay open at a time */
+    currentItem = item;
+    const accent = item.accent || (ROADMAP_DATA.indexOf(item) % 2 === 0 ? 'teal' : 'orange');
+    const hex = isCompleted(item.id) ? COMPLETED_HEX : ACCENT_HEX[accent];
+
+    const overlay = document.getElementById('modal-overlay');
+    const modal = document.getElementById('modal');
+    const icon = document.getElementById('modal-icon');
+
+    modal.style.setProperty('--accent-color', hex);
+    icon.innerHTML = ICONS[item.icon];
+    icon.style.background = hex + '2e';
+    icon.style.color = hex;
+
+    document.getElementById('modal-code').textContent = 'FASE ' + String(item.phase).padStart(2, '0');
+    document.getElementById('modal-title').textContent = item.name;
+    document.getElementById('modal-mission').textContent = item.mission;
+
+    const ul = document.getElementById('modal-objectives');
+    ul.innerHTML = '';
+    item.objectives.forEach((o) => {
+      const li = document.createElement('li');
+      li.textContent = o;
+      ul.appendChild(li);
+    });
+
+    lastFocusedModal = document.activeElement;
+    overlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('modal-close').focus();
+  }
+
+  function closeModal(){
+    const overlay = document.getElementById('modal-overlay');
+    if(!overlay.classList.contains('is-open')) return;
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+    if (lastFocusedModal) lastFocusedModal.focus();
+    currentItem = null;
+  }
+
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-cta').addEventListener('click', () => {
+    if(currentItem){
+      markCompleted(currentItem.id);
+      refreshNode(currentItem.id); /* mission completion never affects locking, so a single-node refresh is enough */
+    }
+    closeModal();
+  });
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+
+  /* ================================================================
+     CONTENT DRAWER — tabbed learning module system
+     ================================================================ */
+  let lastFocusedDrawer = null;
+  let drawerState = { item: null, activeModule: 0, view: 'theory', calibrationIndex: 0, theoryStepIndex: 0 };
+
+  function openDrawer(item){
+    closeModal(); /* mutual exclusivity: only one overlay open at a time */
+    const accent = item.accent || (ROADMAP_DATA.indexOf(item) % 2 === 0 ? 'teal' : 'orange');
+    const hex = ACCENT_HEX[accent];
+
+    const overlay = document.getElementById('drawer-overlay');
+    const drawer = document.getElementById('drawer');
+
+    drawer.style.setProperty('--accent-color', hex);
+    drawer.setAttribute('aria-label', item.name + ' — contenido de la fase');
+    document.getElementById('drawer-eyebrow').textContent =
+      'FASE ' + String(item.phase).padStart(2, '0') + ' · Contenido';
+
+    drawerState = { item: item, activeModule: 0, view: 'theory', calibrationIndex: 0, theoryStepIndex: 0 };
+    renderDrawerTabs();
+    renderDrawerPanel();
+
+    lastFocusedDrawer = document.activeElement;
+    overlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('drawer-body').scrollTop = 0;
+    document.getElementById('drawer-close').focus();
+  }
+
+  function closeDrawer(){
+    const overlay = document.getElementById('drawer-overlay');
+    if(!overlay.classList.contains('is-open')) return;
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+    if (lastFocusedDrawer) lastFocusedDrawer.focus();
+  }
+
+  document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+  document.getElementById('drawer-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'drawer-overlay') closeDrawer();
+  });
+
+  /* ---- Tab bar ---- */
+  function renderDrawerTabs(){
+    const tabsEl = document.getElementById('drawer-tabs');
+    const item = drawerState.item;
+    if(!item || !Array.isArray(item.modules)){ tabsEl.innerHTML = ''; return; }
+
+    tabsEl.innerHTML = item.modules.map((m, i) => {
+      const passed = hasModuleQuiz(m) && isCalibrationPassed(item.id, i);
+      const activeClass = i === drawerState.activeModule ? ' is-active' : '';
+      const lockedClass = m.locked ? ' is-locked' : '';
+      const badge = m.locked
+        ? '<span class="tab-lock">' + ICONS.lock + '</span>'
+        : (passed ? '<span class="tab-check">' + ICONS.check + '</span>' : '');
+      return '<button type="button" class="drawer-tab' + activeClass + lockedClass + '" data-module-index="' + i + '">' +
+        m.tabTitle + badge + '</button>';
+    }).join('');
+
+    tabsEl.querySelectorAll('.drawer-tab').forEach((btn) => {
+      btn.addEventListener('click', () => selectModule(Number(btn.dataset.moduleIndex)));
+    });
+  }
+
+  function selectModule(i){
+    const item = drawerState.item;
+    if(!item || !item.modules[i]) return;
+    drawerState.activeModule = i;
+    drawerState.view = 'theory';
+    drawerState.calibrationIndex = 0;
+    drawerState.theoryStepIndex = 0;
+    renderDrawerTabs();
+    renderDrawerPanel();
+    document.getElementById('drawer-body').scrollTop = 0;
+  }
+
+  /* ---- Native "before/after" illustrative sliders inside theory prose ---- */
+  function initComparisonSliders(container){
+    const wrappers = container.querySelectorAll('.compare-wrapper');
+    wrappers.forEach((wrapper) => {
+      const slider = wrapper.querySelector('.compare-slider');
+      if(!slider) return;
+      const update = () => { wrapper.style.setProperty('--expose', slider.value + '%'); };
+      update(); /* sync the initial split to the slider's starting value */
+      slider.addEventListener('input', update);
+    });
+  }
+
+  /* ---- Panel: either the module's theory, or its Prueba de Cámara ---- */
+  function renderDrawerPanel(){
+    const panel = document.getElementById('drawer-panel');
+    const item = drawerState.item;
+    if(!item){ panel.innerHTML = ''; return; }
+    const module = item.modules[drawerState.activeModule];
+    if(!module){ panel.innerHTML = ''; return; }
+
+    /* Locked module: always show the "vuelve la próxima semana" screen,
+       no matter what drawerState.view says — this guard runs BEFORE the
+       view dispatch below so a stale view left over from another module
+       (e.g. 'calibration') can never sneak past the lock. */
+    if(module.locked){
+      renderLockedModulePanel(panel, module);
+      return;
+    }
+
+    if(drawerState.view === 'calibration'){
+      renderCalibrationPanel(panel, item, module, drawerState.activeModule);
+    } else if(drawerState.view === 'audio'){
+      renderAudioPanel(panel, item, module, drawerState.activeModule);
+    } else if(drawerState.view === 'text'){
+      renderTextPanel(panel, item, module, drawerState.activeModule);
+    } else if(drawerState.view === 'order'){
+      renderOrderPanel(panel, item, module, drawerState.activeModule);
+    } else {
+      renderModuleTheoryPanel(panel, item, module, drawerState.activeModule);
+    }
+  }
+
+  /* ---- Locked module screen (module.locked === true) ---- */
+  function renderLockedModulePanel(panel, module){
+    const message = module.lockedMessage || 'Este contenido todavía no está disponible.';
+    panel.innerHTML =
+      '<div class="locked-module-screen">' +
+        '<span class="locked-icon">' + ICONS.lock + '</span>' +
+        '<h3>' + message + '</h3>' +
+        '<p>Mientras tanto, sigue practicando en los módulos ya disponibles de esta fase.</p>' +
+      '</div>';
+  }
+
+  function renderModuleTheoryPanel(panel, item, module, moduleIndex){
+    const hasTask = hasModuleQuiz(module);
+    const hasAudio = hasTask && Array.isArray(module.audioTasks) && module.audioTasks.length > 0;
+    const hasText = hasTask && !hasAudio && Array.isArray(module.textTasks) && module.textTasks.length > 0;
+    const hasOrder = hasTask && !hasAudio && !hasText && Array.isArray(module.orderTasks) && module.orderTasks.length > 0;
+    const hasCalibration = hasTask && !hasAudio && !hasText && !hasOrder;
+    /* calibrationTasks with no filterType are budgeting/adjusting an
+       abstract quantity (seconds, position %, word count, FPS...)
+       rather than a visual filter — see La Guillotina and Subtítulos y
+       Exportación in Phase 3. Give that its own generic label/icon
+       rather than "Prueba de Cámara". */
+    const isAdjustmentTask = hasCalibration && Array.isArray(module.calibrationTasks) &&
+      module.calibrationTasks.length > 0 && !module.calibrationTasks[0].filterType;
+    /* textTasks whose first item carries an imageSrc are a visual
+       "spot the rule/angle in this photo" identification quiz (see
+       Composición), not a written narrative-decision scenario — give
+       that its own label/icon instead of "Reto de Guion". */
+    const isIdentificationTask = hasText && Array.isArray(module.textTasks) &&
+      module.textTasks.length > 0 && !!module.textTasks[0].imageSrc;
+    const viewType = hasAudio ? 'audio' : (hasText ? 'text' : (hasOrder ? 'order' : 'calibration'));
+    const passed = hasTask && isCalibrationPassed(item.id, moduleIndex);
+
+    let btnHtml = '';
+    if(hasTask){
+      let startLabel, startIcon;
+      if(viewType === 'audio'){
+        startLabel = passed ? 'Repasar Prueba de Audio' : 'Realizar Prueba de Audio';
+        startIcon = ICONS.mic;
+      } else if(viewType === 'text' && isIdentificationTask){
+        startLabel = passed ? 'Repasar Identificación' : 'Realizar Identificación';
+        startIcon = ICONS.camera;
+      } else if(viewType === 'text'){
+        startLabel = passed ? 'Repasar Reto de Guion' : 'Realizar Reto de Guion';
+        startIcon = ICONS.clapper;
+      } else if(viewType === 'order'){
+        startLabel = passed ? 'Repasar Reto de Orden' : 'Realizar Reto de Orden';
+        startIcon = ICONS.order;
+      } else if(isAdjustmentTask){
+        startLabel = passed ? 'Repasar Prueba de Ajuste' : 'Realizar Prueba de Ajuste';
+        startIcon = ICONS.dial;
+      } else {
+        startLabel = passed ? 'Repasar Prueba de Cámara' : 'Realizar Prueba de Cámara';
+        startIcon = ICONS.camera;
+      }
+      btnHtml =
+        '<button type="button" class="module-task-start" id="module-task-start" data-task-type="' + viewType + '">' +
+          startIcon + '<span>' + startLabel + '</span>' +
+        '</button>';
+    }
+
+    /* Paginated "story cards": the theory shows one step at a time with
+       a "Continuar →" button between them instead of one long scrolling
+       block. module.theorySteps is the array of steps; modules that
+       haven't been converted yet just fall back to their old single
+       contentHTML blob treated as a single step, so nothing breaks. */
+    const steps = Array.isArray(module.theorySteps) && module.theorySteps.length
+      ? module.theorySteps
+      : [{ html: module.contentHTML || '<p>Contenido próximamente disponible.</p>' }];
+    const stepIndex = Math.min(drawerState.theoryStepIndex, steps.length - 1);
+    const isLastStep = stepIndex >= steps.length - 1;
+    const step = steps[stepIndex];
+
+    const stepProgressHtml = steps.length > 1
+      ? '<div class="theory-progress">' + module.tabTitle + ' · Paso ' + (stepIndex + 1) + ' de ' + steps.length + '</div>'
+      : '';
+    const backStepHtml = stepIndex > 0
+      ? '<button type="button" class="quiz-back-link" id="theory-back-step">← Paso anterior</button>'
+      : '';
+    const continueHtml = !isLastStep
+      ? '<button type="button" class="quiz-next" id="theory-continue-btn">Continuar →</button>'
+      : btnHtml;
+
+    panel.innerHTML =
+      '<div class="module-theory">' +
+        backStepHtml +
+        stepProgressHtml +
+        (step.html || '') +
+        continueHtml +
+      '</div>';
+
+    initComparisonSliders(panel);
+
+    const continueBtn = panel.querySelector('#theory-continue-btn');
+    if(continueBtn){
+      continueBtn.addEventListener('click', () => {
+        drawerState.theoryStepIndex = stepIndex + 1;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+    }
+    const backStepBtn = panel.querySelector('#theory-back-step');
+    if(backStepBtn){
+      backStepBtn.addEventListener('click', () => {
+        drawerState.theoryStepIndex = stepIndex - 1;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+    }
+
+    const startBtn = panel.querySelector('#module-task-start');
+    if(startBtn){
+      startBtn.addEventListener('click', () => {
+        drawerState.view = startBtn.dataset.taskType;
+        drawerState.calibrationIndex = 0;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+    }
+  }
+
+  /* ---- "Prueba de Cámara": interactive calibration mini-game, now a
+     progressive sequence of challenges (module.calibrationTasks) ---- */
+  function renderCalibrationPanel(panel, item, module, moduleIndex){
+    const backHtml = '<button type="button" class="quiz-back-link" id="quiz-back-link">← Volver al contenido</button>';
+    const tasks = Array.isArray(module.calibrationTasks) ? module.calibrationTasks : [];
+    /* Some calibrationTasks are about allocating/adjusting an abstract
+       quantity (seconds, a position percentage, a word count, an FPS
+       value...) rather than applying a visual CSS filter — those tasks
+       ship with filterType left empty. Detect that once per module so
+       the UI can degrade gracefully: no filter() is applied to the
+       image, and the value reads using task.unit if the task provides
+       one (e.g. " FPS", "p", " palabras"), falling back to "%" for a
+       real filter or a bare "s" for a legacy no-unit/no-filter task. */
+    const isAdjustmentTask = tasks.length > 0 && !tasks[0].filterType;
+    const taskLabel = isAdjustmentTask ? 'Prueba de Ajuste' : 'Prueba de Cámara';
+
+    if(isCalibrationPassed(item.id, moduleIndex)){
+      const isLastModule = moduleIndex === item.modules.length - 1;
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box quiz-passed">' +
+          '<span class="quiz-passed-icon">' + ICONS.check + '</span>' +
+          '<div><strong>Módulo superado</strong><span class="quiz-passed-msg">Ya aprobaste la ' + taskLabel + ' de "' + module.tabTitle + '".</span></div>' +
+        '</div>' +
+        (isLastModule ? '' : '<button type="button" class="quiz-next" id="quiz-next-module-btn">Siguiente módulo →</button>');
+    } else if(tasks.length){
+      const total = tasks.length;
+      const taskIndex = Math.min(drawerState.calibrationIndex, total - 1);
+      const task = tasks[taskIndex];
+      /* Most retos start the slider at minRange (e.g. "toma en apagón" —
+         begin pitch black, drag UP to reveal). But a reto whose scenario
+         is already too bright ("cegados por el sol") needs the OPPOSITE:
+         start near the blown-out as-shot photo and drag DOWN to fix it.
+         task.initialValue lets a task override the starting position;
+         defaults to minRange when absent so every other existing task
+         (audio/text/order tasks aren't affected either way) keeps its
+         current behavior untouched. */
+      const initialValue = (typeof task.initialValue === 'number') ? task.initialValue : task.minRange;
+      const unit = task.unit || (task.filterType ? '%' : 's');
+      const initialFilter = task.filterType ? task.filterType + '(' + initialValue + '%)' : 'none';
+
+      /* Adjustment tasks (no filterType) don't need — and no longer use —
+         a photo at all: they budget an abstract quantity, so a live
+         digital readout communicates it better than a stock image ever
+         did, and it removes the placehold.co network dependency those
+         tasks used to have. Visual calibration tasks keep the real photo
+         (task.imageSrc, one of the local ./img/... files). */
+      const previewHtml = task.filterType
+        ? '<div class="calibration-preview" id="calibration-preview">' +
+            '<img id="calibration-readout" src="' + task.imageSrc + '" alt="Imagen de referencia" style="filter:' + initialFilter + '">' +
+          '</div>'
+        : '<div class="calibration-preview calibration-readout" id="calibration-preview">' +
+            '<span class="calibration-readout-icon">' + ICONS.dial + '</span>' +
+            '<span class="calibration-readout-value" id="calibration-readout">' + initialValue + unit + '</span>' +
+          '</div>';
+
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box">' +
+          '<div class="quiz-progress">' + taskLabel + ' · ' + module.tabTitle + ' · Reto ' + (taskIndex + 1) + ' de ' + total + '</div>' +
+          '<p class="quiz-question">' + task.instruction + '</p>' +
+          previewHtml +
+          '<div class="calibration-slider-row">' +
+            '<input type="range" class="calibration-slider" id="calibration-slider" min="' + task.minRange + '" max="' + task.maxRange + '" value="' + initialValue + '" aria-label="' + task.instruction + '">' +
+            '<span class="calibration-value" id="calibration-value">' + initialValue + unit + '</span>' +
+          '</div>' +
+          '<button type="button" class="module-task-start" id="calibration-confirm">' + ICONS.check + '<span>Confirmar Calibración</span></button>' +
+          '<p class="quiz-feedback" hidden aria-live="polite"></p>' +
+        '</div>';
+
+      const readoutEl = panel.querySelector('#calibration-readout');
+      const slider = panel.querySelector('#calibration-slider');
+      const valueLabel = panel.querySelector('#calibration-value');
+      const previewBox = panel.querySelector('#calibration-preview');
+      const confirmBtn = panel.querySelector('#calibration-confirm');
+      const feedbackEl = panel.querySelector('.quiz-feedback');
+
+      slider.addEventListener('input', () => {
+        if(task.filterType){
+          readoutEl.style.filter = task.filterType + '(' + slider.value + '%)';
+        } else {
+          readoutEl.textContent = slider.value + unit;
+        }
+        valueLabel.textContent = slider.value + unit;
+      });
+
+      confirmBtn.addEventListener('click', () => {
+        handleCalibrationConfirm(panel, item, module, moduleIndex, task, taskIndex, total, previewBox, feedbackEl, slider, confirmBtn);
+      });
+    }
+
+    const backBtn = panel.querySelector('#quiz-back-link');
+    if(backBtn){
+      backBtn.addEventListener('click', () => {
+        drawerState.view = 'theory';
+        drawerState.calibrationIndex = 0;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+    }
+    const nextModuleBtn = panel.querySelector('#quiz-next-module-btn');
+    if(nextModuleBtn){
+      nextModuleBtn.addEventListener('click', () => selectModule(moduleIndex + 1));
+    }
+  }
+
+  /* Fail Smart: out-of-range readings shake the preview and explain
+     exactly what went wrong so the student can correct on the next try.
+     Landing inside sweetSpot on a non-final challenge reveals a
+     "Siguiente Reto →" button that advances calibrationIndex and
+     renders the next task; landing it on the FINAL challenge passes
+     the whole module for good (localStorage + tab checkmark + unlocks
+     the next phase's gate where applicable). */
+  function handleCalibrationConfirm(panel, item, module, moduleIndex, task, taskIndex, total, previewBox, feedbackEl, slider, confirmBtn){
+    const value = Number(slider.value);
+
+    if(value < task.sweetSpot[0] || value > task.sweetSpot[1]){
+      const isLow = value < task.sweetSpot[0];
+      feedbackEl.textContent = isLow ? task.feedbackTooLow : task.feedbackTooHigh;
+      feedbackEl.hidden = false;
+      feedbackEl.className = 'quiz-feedback is-wrong';
+
+      previewBox.classList.remove('is-shake');
+      void previewBox.offsetWidth; /* restart the shake animation on repeated misses */
+      previewBox.classList.add('is-shake');
+      return;
+    }
+
+    /* Inside the sweet spot for this challenge. */
+    feedbackEl.textContent = task.feedbackSuccess;
+    feedbackEl.hidden = false;
+    feedbackEl.className = 'quiz-feedback is-right';
+    slider.disabled = true;
+    confirmBtn.disabled = true;
+    confirmBtn.style.display = 'none';
+
+    const isLastTask = taskIndex >= total - 1;
+
+    if(!isLastTask){
+      const nextTaskBtn = document.createElement('button');
+      nextTaskBtn.type = 'button';
+      nextTaskBtn.className = 'quiz-next';
+      nextTaskBtn.textContent = 'Siguiente Reto →';
+      nextTaskBtn.addEventListener('click', () => {
+        drawerState.calibrationIndex = taskIndex + 1;
+        renderDrawerPanel(); /* rebuilds the panel fresh for the next challenge */
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+      panel.querySelector('.quiz-box').appendChild(nextTaskBtn);
+      nextTaskBtn.focus();
+      return;
+    }
+
+    /* Final challenge of this module passed: the module itself is done. */
+    markCalibrationPassed(item.id, moduleIndex);
+    refreshAllNodes(); /* may unlock the NEXT phase too */
+    renderDrawerTabs(); /* show the green check on this tab */
+
+    const isLastModule = moduleIndex === item.modules.length - 1;
+    if(!isLastModule){
+      const nextModuleBtn = document.createElement('button');
+      nextModuleBtn.type = 'button';
+      nextModuleBtn.className = 'quiz-next';
+      nextModuleBtn.textContent = 'Siguiente módulo →';
+      nextModuleBtn.addEventListener('click', () => selectModule(moduleIndex + 1));
+      panel.querySelector('.quiz-box').appendChild(nextModuleBtn);
+      nextModuleBtn.focus();
+    }
+  }
+
+  /* ---- "Reto de Orden": drag-free reorder mini-game styled as a
+     horizontal video-editor timeline (CapCut/Premiere style). Left/
+     Right buttons nudge a clip one slot at a time — chosen over HTML5
+     drag-and-drop specifically for mobile reliability, since native
+     DnD is unreliable on touch without extra polyfill work. The
+     current order is read straight off the live DOM at confirm time,
+     so no parallel JS array needs to stay in sync with the buttons. ---- */
+  function moveOrderItem(clip, direction){
+    if(direction === 'left' && clip.previousElementSibling){
+      clip.parentElement.insertBefore(clip, clip.previousElementSibling);
+    } else if(direction === 'right' && clip.nextElementSibling){
+      clip.parentElement.insertBefore(clip.nextElementSibling, clip);
+    }
+  }
+
+  function refreshOrderButtonStates(trackEl){
+    const clips = Array.from(trackEl.children);
+    clips.forEach((clip, i) => {
+      const leftBtn = clip.querySelector('[data-dir="left"]');
+      const rightBtn = clip.querySelector('[data-dir="right"]');
+      if(leftBtn) leftBtn.disabled = i === 0;
+      if(rightBtn) rightBtn.disabled = i === clips.length - 1;
+    });
+  }
+
+  function renderOrderPanel(panel, item, module, moduleIndex){
+    const backHtml = '<button type="button" class="quiz-back-link" id="quiz-back-link">← Volver al contenido</button>';
+
+    if(isCalibrationPassed(item.id, moduleIndex)){
+      const isLastModule = moduleIndex === item.modules.length - 1;
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box quiz-passed">' +
+          '<span class="quiz-passed-icon">' + ICONS.check + '</span>' +
+          '<div><strong>Módulo superado</strong><span class="quiz-passed-msg">Ya aprobaste el Reto de Orden de "' + module.tabTitle + '".</span></div>' +
+        '</div>' +
+        (isLastModule ? '' : '<button type="button" class="quiz-next" id="quiz-next-module-btn">Siguiente módulo →</button>');
+    } else if(Array.isArray(module.orderTasks) && module.orderTasks.length){
+      const tasks = module.orderTasks;
+      const total = tasks.length;
+      const taskIndex = Math.min(drawerState.calibrationIndex, total - 1);
+      const task = tasks[taskIndex];
+
+      const clipsHtml = task.items.map((text) => {
+        /* Bug fix: item text can contain literal double quotes (e.g. the
+           quoted dialogue lines in Phase 4's "La Premiere"). Interpolating
+           that raw into data-value="..." would close the attribute early
+           and corrupt the markup. Escaping to &quot; keeps the HTML valid;
+           the browser decodes it back to a literal " when read via
+           .dataset.value, so the correctOrder comparison is unaffected. */
+        const safeText = String(text).replace(/"/g, '&quot;');
+        return '<li class="timeline-clip" data-value="' + safeText + '">' +
+          '<div class="timeline-clip-thumb">' + ICONS.clapper + '</div>' +
+          '<span class="timeline-clip-label">' + safeText + '</span>' +
+          '<div class="timeline-clip-controls">' +
+            '<button type="button" class="order-btn" data-dir="left" aria-label="Mover a la izquierda">' + ICONS.orderLeft + '</button>' +
+            '<button type="button" class="order-btn" data-dir="right" aria-label="Mover a la derecha">' + ICONS.orderRight + '</button>' +
+          '</div>' +
+        '</li>';
+      }).join('');
+
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box">' +
+          '<div class="quiz-progress">Reto de Orden · ' + module.tabTitle + ' · Reto ' + (taskIndex + 1) + ' de ' + total + '</div>' +
+          '<p class="quiz-question">' + task.instruction + '</p>' +
+          '<div class="timeline-wrapper">' +
+            '<ol class="timeline-track" id="order-list">' + clipsHtml + '</ol>' +
+          '</div>' +
+          '<button type="button" class="module-task-start" id="order-confirm">' + ICONS.check + '<span>Confirmar Orden</span></button>' +
+          '<p class="quiz-feedback" hidden aria-live="polite"></p>' +
+        '</div>';
+
+      const trackEl = panel.querySelector('#order-list');
+      const confirmBtn = panel.querySelector('#order-confirm');
+      const feedbackEl = panel.querySelector('.quiz-feedback');
+
+      refreshOrderButtonStates(trackEl);
+
+      trackEl.querySelectorAll('.order-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const clip = btn.closest('.timeline-clip');
+          moveOrderItem(clip, btn.dataset.dir);
+          refreshOrderButtonStates(trackEl);
+          clip.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+        });
+      });
+
+      confirmBtn.addEventListener('click', () => {
+        handleOrderConfirm(panel, item, module, moduleIndex, task, taskIndex, total, trackEl, feedbackEl, confirmBtn);
+      });
+    }
+
+    const backBtn = panel.querySelector('#quiz-back-link');
+    if(backBtn){
+      backBtn.addEventListener('click', () => {
+        drawerState.view = 'theory';
+        drawerState.calibrationIndex = 0;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+    }
+    const nextModuleBtn = panel.querySelector('#quiz-next-module-btn');
+    if(nextModuleBtn){
+      nextModuleBtn.addEventListener('click', () => selectModule(moduleIndex + 1));
+    }
+  }
+
+  /* Fail Smart for ordering: a mismatched sequence shakes the whole
+     timeline track and explains via feedbackWrong — nothing gets
+     disabled, so the student can keep nudging clips left/right and
+     retry immediately. An exact match behaves like every other task
+     type: "Siguiente Reto →" mid-sequence, or a full module pass on
+     the final challenge. */
+  function handleOrderConfirm(panel, item, module, moduleIndex, task, taskIndex, total, trackEl, feedbackEl, confirmBtn){
+    const currentOrder = Array.from(trackEl.querySelectorAll('.timeline-clip')).map((clip) => clip.dataset.value);
+    const isCorrect = currentOrder.length === task.correctOrder.length &&
+      currentOrder.every((val, i) => val === task.correctOrder[i]);
+
+    if(!isCorrect){
+      feedbackEl.textContent = task.feedbackWrong || 'Ese orden no es correcto. Intenta de nuevo.';
+      feedbackEl.hidden = false;
+      feedbackEl.className = 'quiz-feedback is-wrong';
+
+      trackEl.classList.remove('is-shake');
+      void trackEl.offsetWidth; /* restart the shake animation on repeated misses */
+      trackEl.classList.add('is-shake');
+      return;
+    }
+
+    /* Order matches exactly. */
+    feedbackEl.textContent = task.feedbackSuccess || 'Correcto.';
+    feedbackEl.hidden = false;
+    feedbackEl.className = 'quiz-feedback is-right';
+
+    trackEl.querySelectorAll('.order-btn').forEach((b) => { b.disabled = true; });
+    confirmBtn.disabled = true;
+    confirmBtn.style.display = 'none';
+
+    const isLastTask = taskIndex >= total - 1;
+
+    if(!isLastTask){
+      const nextTaskBtn = document.createElement('button');
+      nextTaskBtn.type = 'button';
+      nextTaskBtn.className = 'quiz-next';
+      nextTaskBtn.textContent = 'Siguiente Reto →';
+      nextTaskBtn.addEventListener('click', () => {
+        drawerState.calibrationIndex = taskIndex + 1;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+      panel.querySelector('.quiz-box').appendChild(nextTaskBtn);
+      nextTaskBtn.focus();
+      return;
+    }
+
+    /* Final challenge of this module passed: the module itself is done. */
+    markCalibrationPassed(item.id, moduleIndex);
+    refreshAllNodes(); /* may unlock the NEXT phase too */
+    renderDrawerTabs(); /* show the green check on this tab */
+
+    const isLastModule = moduleIndex === item.modules.length - 1;
+    if(!isLastModule){
+      const nextModuleBtn = document.createElement('button');
+      nextModuleBtn.type = 'button';
+      nextModuleBtn.className = 'quiz-next';
+      nextModuleBtn.textContent = 'Siguiente módulo →';
+      nextModuleBtn.addEventListener('click', () => selectModule(moduleIndex + 1));
+      panel.querySelector('.quiz-box').appendChild(nextModuleBtn);
+      nextModuleBtn.focus();
+    }
+  }
+
+  /* ---- "Prueba de Audio": listen-and-classify mini-game, same
+     progressive sequence + Fail Smart pattern as the camera calibration,
+     but the input is a multiple-choice pick instead of a slider —
+     appropriate for audio, which has no meaningful CSS filter analog. ---- */
+  function renderAudioPanel(panel, item, module, moduleIndex){
+    const backHtml = '<button type="button" class="quiz-back-link" id="quiz-back-link">← Volver al contenido</button>';
+
+    if(isCalibrationPassed(item.id, moduleIndex)){
+      const isLastModule = moduleIndex === item.modules.length - 1;
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box quiz-passed">' +
+          '<span class="quiz-passed-icon">' + ICONS.check + '</span>' +
+          '<div><strong>Módulo superado</strong><span class="quiz-passed-msg">Ya aprobaste la Prueba de Audio de "' + module.tabTitle + '".</span></div>' +
+        '</div>' +
+        (isLastModule ? '' : '<button type="button" class="quiz-next" id="quiz-next-module-btn">Siguiente módulo →</button>');
+    } else if(Array.isArray(module.audioTasks) && module.audioTasks.length){
+      const tasks = module.audioTasks;
+      const total = tasks.length;
+      const taskIndex = Math.min(drawerState.calibrationIndex, total - 1);
+      const task = tasks[taskIndex];
+
+      const optionsHtml = task.options.map((opt, i) =>
+        '<button type="button" class="quiz-option" data-index="' + i + '">' + opt + '</button>'
+      ).join('');
+
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box">' +
+          '<div class="quiz-progress">Prueba de Audio · ' + module.tabTitle + ' · Reto ' + (taskIndex + 1) + ' de ' + total + '</div>' +
+          '<p class="quiz-question">' + task.instruction + '</p>' +
+          '<audio src="' + task.audioSrc + '" controls class="audio-player" style="width:100%; margin-bottom: 16px;"></audio>' +
+          '<div class="quiz-options">' + optionsHtml + '</div>' +
+          '<p class="quiz-feedback" hidden aria-live="polite"></p>' +
+        '</div>';
+
+      panel.querySelectorAll('.quiz-option').forEach((btn) => {
+        btn.addEventListener('click', () => handleAudioAnswer(panel, btn, task, item, module, moduleIndex, taskIndex, total));
+      });
+    }
+
+    const backBtn = panel.querySelector('#quiz-back-link');
+    if(backBtn){
+      backBtn.addEventListener('click', () => {
+        drawerState.view = 'theory';
+        drawerState.calibrationIndex = 0;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+    }
+    const nextModuleBtn = panel.querySelector('#quiz-next-module-btn');
+    if(nextModuleBtn){
+      nextModuleBtn.addEventListener('click', () => selectModule(moduleIndex + 1));
+    }
+  }
+
+  /* Fail Smart for audio: a wrong pick shakes and disables itself (so the
+     student narrows in on the right answer by elimination) and explains
+     the mistake via feedbackWrong; a correct pick behaves exactly like
+     the calibration flow — "Siguiente Reto →" mid-sequence, or a full
+     module pass (localStorage + tab checkmark + "Siguiente módulo →")
+     on the final challenge. */
+  function handleAudioAnswer(panel, btn, task, item, module, moduleIndex, taskIndex, total){
+    const chosen = Number(btn.dataset.index);
+    const box = panel.querySelector('.quiz-box');
+    const feedbackEl = box.querySelector('.quiz-feedback');
+    const allButtons = box.querySelectorAll('.quiz-option');
+
+    if(chosen === task.correctIndex){
+      allButtons.forEach((b) => { b.disabled = true; });
+      btn.classList.add('is-correct');
+      feedbackEl.textContent = task.feedbackSuccess || 'Correcto.';
+      feedbackEl.hidden = false;
+      feedbackEl.className = 'quiz-feedback is-right';
+
+      const isLastTask = taskIndex >= total - 1;
+
+      if(!isLastTask){
+        const nextTaskBtn = document.createElement('button');
+        nextTaskBtn.type = 'button';
+        nextTaskBtn.className = 'quiz-next';
+        nextTaskBtn.textContent = 'Siguiente Reto →';
+        nextTaskBtn.addEventListener('click', () => {
+          drawerState.calibrationIndex = taskIndex + 1;
+          renderDrawerPanel();
+          document.getElementById('drawer-body').scrollTop = 0;
+        });
+        box.appendChild(nextTaskBtn);
+        nextTaskBtn.focus();
+        return;
+      }
+
+      /* Final challenge of this module passed: the module itself is done. */
+      markCalibrationPassed(item.id, moduleIndex);
+      refreshAllNodes(); /* may unlock the NEXT phase too */
+      renderDrawerTabs(); /* show the green check on this tab */
+
+      const isLastModule = moduleIndex === item.modules.length - 1;
+      if(!isLastModule){
+        const nextModuleBtn = document.createElement('button');
+        nextModuleBtn.type = 'button';
+        nextModuleBtn.className = 'quiz-next';
+        nextModuleBtn.textContent = 'Siguiente módulo →';
+        nextModuleBtn.addEventListener('click', () => selectModule(moduleIndex + 1));
+        box.appendChild(nextModuleBtn);
+        nextModuleBtn.focus();
+      }
+    } else {
+      btn.disabled = true;
+      btn.classList.remove('is-shake');
+      btn.classList.add('is-wrong');
+      void btn.offsetWidth; /* restart the shake animation on repeated misses */
+      btn.classList.add('is-shake');
+      feedbackEl.textContent = task.feedbackWrong || 'Esa no es. Intenta con otra opción.';
+      feedbackEl.hidden = false;
+      feedbackEl.className = 'quiz-feedback is-wrong';
+    }
+  }
+
+  /* ---- "Reto de Guion": scripting/scenario mini-game. Same shape and
+     Fail Smart behaviour as the audio classification task — it reuses
+     handleAudioAnswer verbatim, since that function only ever reads
+     options/correctIndex/feedbackWrong/feedbackSuccess off the task,
+     never audioSrc. The only real difference is what's displayed above
+     the options: a written scenario instead of an <audio> player. ---- */
+  function renderTextPanel(panel, item, module, moduleIndex){
+    const backHtml = '<button type="button" class="quiz-back-link" id="quiz-back-link">← Volver al contenido</button>';
+    /* Same detection as renderModuleTheoryPanel: an imageSrc on the
+       first task means this is a visual identification quiz ("¿qué
+       ángulo es este?"), not a written scenario. */
+    const isIdentificationTask = Array.isArray(module.textTasks) && module.textTasks.length > 0 &&
+      !!module.textTasks[0].imageSrc;
+    const taskLabel = isIdentificationTask ? 'Identificación' : 'Reto de Guion';
+
+    if(isCalibrationPassed(item.id, moduleIndex)){
+      const isLastModule = moduleIndex === item.modules.length - 1;
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box quiz-passed">' +
+          '<span class="quiz-passed-icon">' + ICONS.check + '</span>' +
+          '<div><strong>Módulo superado</strong><span class="quiz-passed-msg">Ya aprobaste la ' + taskLabel + ' de "' + module.tabTitle + '".</span></div>' +
+        '</div>' +
+        (isLastModule ? '' : '<button type="button" class="quiz-next" id="quiz-next-module-btn">Siguiente módulo →</button>');
+    } else if(Array.isArray(module.textTasks) && module.textTasks.length){
+      const tasks = module.textTasks;
+      const total = tasks.length;
+      const taskIndex = Math.min(drawerState.calibrationIndex, total - 1);
+      const task = tasks[taskIndex];
+
+      const optionsHtml = task.options.map((opt, i) =>
+        '<button type="button" class="quiz-option" data-index="' + i + '">' + opt + '</button>'
+      ).join('');
+
+      /* task.imageSrc: a photo to identify (regla de tercios, ángulos...).
+         task.scenario: a short written scenario (Reto de Guion). A task
+         normally carries one or the other, never both, but nothing stops
+         a future task from using both if that's ever useful. */
+      const imageHtml = task.imageSrc
+        ? '<img src="' + task.imageSrc + '" class="content-img" alt="Foto a identificar">'
+        : '';
+
+      panel.innerHTML =
+        backHtml +
+        '<div class="quiz-box">' +
+          '<div class="quiz-progress">' + taskLabel + ' · ' + module.tabTitle + ' · Reto ' + (taskIndex + 1) + ' de ' + total + '</div>' +
+          '<p class="quiz-question">' + task.instruction + '</p>' +
+          imageHtml +
+          (task.scenario ? '<p class="text-scenario">' + task.scenario + '</p>' : '') +
+          '<div class="quiz-options">' + optionsHtml + '</div>' +
+          '<p class="quiz-feedback" hidden aria-live="polite"></p>' +
+        '</div>';
+
+      panel.querySelectorAll('.quiz-option').forEach((btn) => {
+        btn.addEventListener('click', () => handleAudioAnswer(panel, btn, task, item, module, moduleIndex, taskIndex, total));
+      });
+    }
+
+    const backBtn = panel.querySelector('#quiz-back-link');
+    if(backBtn){
+      backBtn.addEventListener('click', () => {
+        drawerState.view = 'theory';
+        drawerState.calibrationIndex = 0;
+        renderDrawerPanel();
+        document.getElementById('drawer-body').scrollTop = 0;
+      });
+    }
+    const nextModuleBtn = panel.querySelector('#quiz-next-module-btn');
+    if(nextModuleBtn){
+      nextModuleBtn.addEventListener('click', () => selectModule(moduleIndex + 1));
+    }
+  }
+
+  /* Escape closes whichever overlay is currently open. The onboarding
+     overlay is deliberately NOT included here — it has to be completed
+     (or already satisfied) before the rest of the app is usable. */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('victory-overlay').classList.contains('is-open')) {
+      closeVictoryScreen();
+    } else if (document.getElementById('drawer-overlay').classList.contains('is-open')) {
+      closeDrawer();
+    } else if (document.getElementById('modal-overlay').classList.contains('is-open')) {
+      closeModal();
+    }
+  });
+
+  /* ================================================================
+     SCROLL REVEAL (fade/slide-in per node)
+     ================================================================ */
+  function observeNodes(){
+    const nodes = document.querySelectorAll('.roadmap-node');
+    if (!('IntersectionObserver' in window)) {
+      nodes.forEach((n) => n.classList.add('is-visible'));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    nodes.forEach((n) => observer.observe(n));
+  }
+
+  render();
+  updateGlobalProgressBar();
+  checkGlobalCompletion(); /* guarded by VICTORY_SEEN_KEY, so this is a safe no-op on repeat visits */
+  initOnboarding();
+</script>
+
+</body>
+</html>
