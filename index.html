@@ -1596,13 +1596,14 @@
                  la exposición, no subirla. maxRange se limitó a 100
                  porque subir más allá del original no tiene sentido
                  ("reduce la exposición" es el único movimiento válido).
-                 sweetSpot recalibrado renderizando la foto real: entre
-                 35-55% es donde playa/personas/colores se leen mejor
-                 sin quedar ni oscura ni deslumbrada. */
+                 sweetSpot fijado a pedido explícito del profesor en
+                 70-80% (antes 35-55% según el análisis de brillo de la
+                 foto) — marca correcto ÚNICAMENTE dentro de ese margen,
+                 ni un punto más abajo ni más arriba. */
               instruction: 'Reto 2/5 (Cegados por el Sol): Hay un exceso de luz brutal. Reduce la exposición hasta que los colores se vean normales.',
               imageSrc: './img/luz-reto2.jpg',
               filterType: 'brightness',
-              minRange: 0, maxRange: 100, initialValue: 100, sweetSpot: [35, 55],
+              minRange: 0, maxRange: 100, initialValue: 100, sweetSpot: [70, 80],
               feedbackTooLow: '¡Corte! 🎬 Ahora te pasaste de oscuro. Sube un poco.',
               feedbackTooHigh: '¡Corte! 🎬 Sigue estallada de luz. Tienes que bajarla más.',
               feedbackSuccess: '¡Queda! 🎥 Excelente. El mar y la escena recuperaron su color.'
