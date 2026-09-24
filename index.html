@@ -1648,38 +1648,90 @@
         },
         {
           tabTitle: 'Revelado',
-          /* Bloqueado a propósito (ago 2026): el contenido ya está
-             escrito más abajo, pero todavía no le toca su semana. Con
-             locked:true la pestaña se puede abrir pero solo muestra el
-             candado + el mensaje de "vuelve la próxima semana" — el
-             contenido y los calibrationTasks de abajo quedan inertes
-             mientras tanto. A propósito, esto SÍ mantiene bloqueadas la
-             misión de esta fase y la Fase 2 (nadie puede pasar los
-             retos de un módulo al que no puede entrar — ver
-             hasModuleQuiz), así que nadie avanza más rápido que el
-             ritmo real de la clase. Para reactivarlo cuando llegue su
-             semana, borra la línea locked (y opcionalmente
-             lockedMessage). */
-          locked: true,
-          lockedMessage: '¡La próxima semana continuamos en nuestro Laboratorio de Creadores Digitales!',
-          contentHTML: `
-            <h3>3. Revelado: El toque final</h3>
-            <p>"Revelar" una foto o video en el celular no significa ponerle el filtro más exagerado de Instagram hasta que se vea falso. Los verdaderos creadores usan las herramientas nativas del teléfono o apps de edición para ajustar tres cosas clave y darle un <em>look</em> profesional:</p>
-
-            <h4>Exposición</h4>
-            <p>¿Tu toma quedó muy oscura o estallada de luz (casi blanca)? Aquí lo equilibras para recuperar los detalles.</p>
-            ${buildCompareSlider('./img/expo-antes.jpg', './img/expo-despues.jpg', 'Subexpuesto', 'Correcto')}
-
-            <h4>Contraste</h4>
-            <p>Hace que los colores oscuros sean más profundos y los claros más brillantes. Le da fuerza a la imagen para que no se vea "lavada" o grisácea.</p>
-            ${buildCompareSlider('./img/contraste-antes.jpg', './img/contraste-despues.jpg', 'Plano', 'Contrastado')}
-
-            <h4>Temperatura</h4>
-            <p>Define el mood. ¿Quieres que el video transmita un ambiente frío y de suspenso (tonos azulados) o uno cálido y nostálgico (tonos naranjas)?</p>
-            ${buildCompareSlider('./img/temp-antes.jpg', './img/temp-despues.jpg', 'Frío', 'Cálido')}
-            
-            <p><strong>Pro-Tip:</strong> La regla de oro del revelado es que <em>menos es más</em>. Un buen ajuste resalta la realidad, pero no se nota a simple vista.</p>
-          `,
+          /* Desbloqueado (sep 2026) a pedido explícito del profesor, con
+             las 11 fotos ya subidas a img/. Nota aparte para quien edite
+             esto después: las pestañas de módulos dentro de UNA MISMA
+             fase (Composición / Luz Natural / Revelado) NUNCA se
+             bloquean entre sí — selectModule() no tiene ninguna
+             validación de prerequisito, así que cualquier pestaña se
+             puede abrir en cualquier momento sin importar el progreso en
+             las otras. Lo único que puede ocultar el contenido de un
+             módulo es el campo locked de ESTE objeto (ver abajo, si
+             algún día hay que re-bloquearlo por ritmo de clase):
+               locked: true,
+               lockedMessage: '¡La próxima semana continuamos en nuestro Laboratorio de Creadores Digitales!',
+             Bloquear/desbloquear con ese campo tampoco afecta a los
+             otros módulos de la fase — solo cambia si hasModuleQuiz
+             cuenta a REVELADO MISMO como aprobable, lo que a su vez
+             decide si la misión de la fase y la Fase 2 se desbloquean
+             (ver hasModuleQuiz). */
+          /* Convertido a theorySteps (sep 2026), mismo formato "story card"
+             que Composición y Luz Natural: la intro y cada uno de los
+             conceptos son su propia tarjeta con "Continuar →". Los 3
+             buildCompareSlider (6 fotos antes/después) y los 5
+             calibrationTasks (rev-reto1 a rev-reto5) se mantienen — ver la
+             lista de fotos pendientes en el chat con el profesor.
+             Se agregó una tarjeta de "Saturación" (sep 2026) que faltaba:
+             el Reto 3 evalúa saturate() pero la teoría original solo
+             explicaba Exposición/Contraste/Temperatura, dejando un
+             concepto evaluado sin enseñar. Se explicó solo con texto, sin
+             foto ni comparador nuevo, porque el Reto 3 ya es la
+             demostración práctica en vivo del concepto (a diferencia de
+             los otros tres, que si tienen su propio comparador
+             antes/después). A diferencia de Luz Natural, aquí NO hizo
+             falta recalibrar minRange/sweetSpot todavía porque no existen
+             fotos reales aún; cuando el profesor las suba hay que repetir
+             el mismo análisis de brillo/filtro con Python/PIL antes de
+             confiar en estos números. Se evaluó agregar un reto de
+             Identificación como en Composición, pero se decidió NO
+             agregarlo: Revelado ya tiene 5 retos de calibración cubriendo
+             4 conceptos distintos, y sumar identificación arriesgaba pasar
+             la hora de clase — si el profesor lo quiere, se puede agregar
+             después siguiendo el mismo patrón de Composición
+             (textTasks con imageSrc). */
+          theorySteps: [
+            {
+              html: `
+                <h3>3. Revelado: El toque final</h3>
+                <p>"Revelar" una foto o video en el celular no significa ponerle el filtro más exagerado de Instagram hasta que se vea falso. Los verdaderos creadores usan las herramientas nativas del teléfono o apps de edición para ajustar tres cosas clave y darle un <em>look</em> profesional.</p>
+              `
+            },
+            {
+              html: `
+                <h4>Exposición</h4>
+                <p>¿Tu toma quedó muy oscura o estallada de luz (casi blanca)? Aquí lo equilibras para recuperar los detalles.</p>
+                ${buildCompareSlider('./img/expo-antes.jpg', './img/expo-despues.jpg', 'Subexpuesto', 'Correcto')}
+              `
+            },
+            {
+              html: `
+                <h4>Contraste</h4>
+                <p>Hace que los colores oscuros sean más profundos y los claros más brillantes. Le da fuerza a la imagen para que no se vea "lavada" o grisácea.</p>
+                ${buildCompareSlider('./img/contraste-antes.jpg', './img/contraste-despues.jpg', 'Plano', 'Contrastado')}
+              `
+            },
+            {
+              html: `
+                <h4>Temperatura</h4>
+                <p>Define el mood. ¿Quieres que el video transmita un ambiente frío y de suspenso (tonos azulados) o uno cálido y nostálgico (tonos naranjas)?</p>
+                ${buildCompareSlider('./img/temp-antes.jpg', './img/temp-despues.jpg', 'Frío', 'Cálido')}
+              `
+            },
+            {
+              html: `
+                <h4>Saturación</h4>
+                <p>Es la intensidad del color. Si está muy baja, la imagen se ve pálida y sin vida, casi en blanco y negro. Si te pasas de alta, los colores se ven "quemados" o de caricatura, como si fuera un filtro falso. El punto justo se ve vivo pero natural.</p>
+                <p>Vas a practicar este ajuste tú mismo en el Reto 3.</p>
+              `
+            },
+            {
+              html: `
+                <h3>Tu turno</h3>
+                <p><strong>Pro-Tip:</strong> la regla de oro del revelado es que <em>menos es más</em>. Un buen ajuste resalta la realidad, pero no se nota a simple vista.</p>
+                <p>Ahora te toca a ti: 5 retos donde vas a calibrar exposición, contraste, saturación y temperatura sobre escenas reales hasta encontrar el punto exacto.</p>
+              `
+            }
+          ],
           calibrationTasks: [
             {
               instruction: 'Reto 1/5 (La Nevera): La escena se ve triste y azul. Dale calidez arrastrando a la derecha.',
