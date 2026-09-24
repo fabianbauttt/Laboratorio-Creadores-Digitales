@@ -1798,33 +1798,79 @@
       modules: [
         {
           tabTitle: 'Micrófono y Acústica',
-          contentHTML: `
-            <h3>1. La Ley de la Distancia</h3>
-            <p>Puedes grabar un video en 4K, pero si el audio suena como si estuvieras encerrado en un baño, la gente hará scroll en el primer segundo. El secreto del audio profesional no es comprar el equipo más caro, sino entender cómo viaja el sonido.</p>
-            <p><strong>La regla de oro:</strong> El micrófono debe estar lo más cerca posible de la boca sin que salga en el encuadre. Si usas el micrófono integrado de tu celular desde dos metros de distancia, grabarás más el rebote del sonido en las paredes (el famoso "eco" o reverberación) que tu propia voz.</p>
-
-            <h3>2. Hackeando la Acústica (Soluciones Analógicas)</h3>
-            <p>Antes de buscar "filtros mágicos con IA" para limpiar tu audio, resuelve el problema en el mundo físico. Las superficies duras (paredes desnudas, pisos de baldosa) rebotan el sonido. Las superficies blandas (cortinas, alfombras, cobijas) lo absorben.</p>
-            <ul>
-              <li><strong>El truco del clóset:</strong> Muchos creadores profesionales graban sus voces en off (voice-overs) metidos literalmente en su clóset. La ropa absorbe el eco y te da un sonido de estudio o "cabina seca".</li>
-              <li><strong>Direccionalidad:</strong> Asegúrate de saber dónde está el micrófono de tu celular (suele estar en el borde inferior) y háblale directamente a él, no a la pantalla.</li>
-            </ul>
-          `
+          /* Convertido a theorySteps (sep 2026), mismo formato "story card"
+             que Fase 1. Se agregaron 2 tarjetas nuevas (Saturación/Clipping
+             y Plosivas) que faltaban: el Reto 2 y el Reto 3 de "Voz y
+             Presencia" evalúan exactamente esos dos problemas técnicos,
+             pero la teoría original solo explicaba la distancia/eco —
+             mismo tipo de hueco que se encontró y corrigió en Revelado
+             (Saturación de color) durante la revisión de Fase 1. */
+          theorySteps: [
+            {
+              html: `
+                <h3>1. La Ley de la Distancia</h3>
+                <p>Puedes grabar un video en 4K, pero si el audio suena como si estuvieras encerrado en un baño, la gente hará scroll en el primer segundo. El secreto del audio profesional no es comprar el equipo más caro, sino entender cómo viaja el sonido.</p>
+                <p><strong>La regla de oro:</strong> El micrófono debe estar lo más cerca posible de la boca sin que salga en el encuadre. Si usas el micrófono integrado de tu celular desde dos metros de distancia, grabarás más el rebote del sonido en las paredes (el famoso "eco" o reverberación) que tu propia voz.</p>
+              `
+            },
+            {
+              html: `
+                <h3>2. Hackeando la Acústica (Soluciones Analógicas)</h3>
+                <p>Antes de buscar "filtros mágicos con IA" para limpiar tu audio, resuelve el problema en el mundo físico. Las superficies duras (paredes desnudas, pisos de baldosa) rebotan el sonido. Las superficies blandas (cortinas, alfombras, cobijas) lo absorben.</p>
+                <ul>
+                  <li><strong>El truco del clóset:</strong> Muchos creadores profesionales graban sus voces en off (voice-overs) metidos literalmente en su clóset. La ropa absorbe el eco y te da un sonido de estudio o "cabina seca".</li>
+                  <li><strong>Direccionalidad:</strong> Asegúrate de saber dónde está el micrófono de tu celular (suele estar en el borde inferior) y háblale directamente a él, no a la pantalla.</li>
+                </ul>
+              `
+            },
+            {
+              html: `
+                <h3>3. El otro extremo: la Saturación (Clipping)</h3>
+                <p>Si alejarte demasiado del micrófono arruina el audio con eco, acercarte o gritar demasiado cerca lo arruina de otra forma: <strong>saturación</strong> o <em>clipping</em>. Cuando el volumen es tan alto que la onda de sonido "choca" contra el límite máximo que el micrófono puede captar, el audio se distorsiona y suena roto, quemado, imposible de arreglar en edición.</p>
+                <p>La solución es simple: mantén una distancia de dos a tres dedos entre tu boca y el micrófono, y habla con tu volumen normal de conversación, no gritando.</p>
+              `
+            },
+            {
+              html: `
+                <h3>4. El enemigo silencioso: las Plosivas</h3>
+                <p>¿Alguna vez escuchaste un audio donde cada "P" o "B" suena como un golpe de viento contra el micrófono? Eso son las <strong>plosivas</strong>: el aire que sale con fuerza al pronunciar esas letras golpea directamente el micrófono y genera ese "pop" grave y molesto.</p>
+                <p>Se arregla fácil: habla ligeramente de lado al micrófono en vez de directo de frente, o usa una media/paño fino como filtro casero (el clásico "pop filter" improvisado).</p>
+              `
+            }
+          ]
         },
         {
           tabTitle: 'Voz y Presencia',
-          contentHTML: `
-            <h3>1. El flow nace en el diafragma</h3>
-            <p>Piensa en los buenos raperos o en tus narradores favoritos. ¿Cómo logran soltar rimas o textos largos sin quedarse sin aire ni sonar ahogados? No hablan desde la garganta; proyectan la voz desde el <strong>diafragma</strong> (el músculo debajo de los pulmones).</p>
-            <p>Si hablas solo con la garganta, tu voz se vuelve aguda, tensa y delata nerviosismo. Nuestro cerebro detecta esas "microexpresiones" vocales de inmediato y la audiencia desconecta. Si respiras profundo, inflas el estómago y empujas el aire desde abajo, tu voz gana graves, peso y una autoridad natural.</p>
-
-            <h3>2. El Silencio también se edita</h3>
-            <p>El error número uno al grabar es hablar de corrido como una ametralladora por miedo a equivocarse. ¡Relájate! Estás en un set, no transmitiendo en vivo.</p>
-            <ul>
-              <li><strong>Haz pausas conscientes:</strong> Termina una frase. Cierra la boca. Respira. Empieza la siguiente. Esa pausa limpia te salvará la vida en la sala de edición para hacer cortes invisibles.</li>
-              <li><strong>La postura suena:</strong> Aunque estés grabando solo audio, la tensión de tu cuerpo se nota en la voz. Si sonríes levemente y mantienes una postura abierta, cambia por completo la "temperatura" y la empatía de tu narración.</li>
-            </ul>
-          `,
+          /* Convertido a theorySteps (sep 2026). Los 5 audioTasks se
+             mantienen sin cambios — reto1(eco)/reto2(clipping)/
+             reto3(plosivas) ya quedan cubiertos por la teoría de
+             "Micrófono y Acústica" (ver arriba), y reto4/reto5 (tensión
+             de garganta vs. diafragma) los cubre esta misma tarjeta. */
+          theorySteps: [
+            {
+              html: `
+                <h3>1. El flow nace en el diafragma</h3>
+                <p>Piensa en los buenos raperos o en tus narradores favoritos. ¿Cómo logran soltar rimas o textos largos sin quedarse sin aire ni sonar ahogados? No hablan desde la garganta; proyectan la voz desde el <strong>diafragma</strong> (el músculo debajo de los pulmones).</p>
+                <p>Si hablas solo con la garganta, tu voz se vuelve aguda, tensa y delata nerviosismo. Nuestro cerebro detecta esas "microexpresiones" vocales de inmediato y la audiencia desconecta. Si respiras profundo, inflas el estómago y empujas el aire desde abajo, tu voz gana graves, peso y una autoridad natural.</p>
+              `
+            },
+            {
+              html: `
+                <h3>2. El Silencio también se edita</h3>
+                <p>El error número uno al grabar es hablar de corrido como una ametralladora por miedo a equivocarse. ¡Relájate! Estás en un set, no transmitiendo en vivo.</p>
+                <ul>
+                  <li><strong>Haz pausas conscientes:</strong> Termina una frase. Cierra la boca. Respira. Empieza la siguiente. Esa pausa limpia te salvará la vida en la sala de edición para hacer cortes invisibles.</li>
+                  <li><strong>La postura suena:</strong> Aunque estés grabando solo audio, la tensión de tu cuerpo se nota en la voz. Si sonríes levemente y mantienes una postura abierta, cambia por completo la "temperatura" y la empatía de tu narración.</li>
+                </ul>
+              `
+            },
+            {
+              html: `
+                <h3>Tu turno</h3>
+                <p>Vas a escuchar 5 clips de audio y detectar qué problema técnico o de presencia tiene cada uno. Usa auriculares si puedes — se nota mucho mejor.</p>
+              `
+            }
+          ],
           audioTasks: [
             {
               instruction: 'Reto 1/5: Escucha el siguiente clip con auriculares. ¿Cuál es el error técnico principal de esta toma?',
@@ -1870,17 +1916,33 @@
         },
         {
           tabTitle: 'Vox Populi',
-          contentHTML: `
-            <h3>1. El reportero de pasillo</h3>
-            <p>El formato "Vox Populi" (la voz del pueblo) es uno de los estilos más virales hoy en día. Consiste en hacer preguntas rápidas e inesperadas a la gente en la calle. Para que funcione, la acústica del entorno es tu mayor enemigo.</p>
-            <ul>
-              <li><strong>Cuidado con el ruido ambiente:</strong> El timbre del descanso o el bullicio del patio le dan vida a la toma, pero no pueden ahogar la voz de tu entrevistado. Ubícate estratégicamente.</li>
-              <li><strong>Control del micrófono:</strong> Si entrevistas a un compañero o docente, asegúrate de acercar el teléfono a su boca cuando hable, y regresarlo a la tuya cuando preguntes. Es como un partido de ping-pong sonoro.</li>
-            </ul>
-            
-            <h3>2. La Pregunta Abierta</h3>
-            <p>Nunca hagas preguntas que se respondan con "Sí" o "No". Diseña preguntas que obliguen a la otra persona a contar una mini-historia o dar una opinión fuerte.</p>
-          `,
+          /* Convertido a theorySteps (sep 2026). Los 5 textTasks se
+             mantienen sin cambios — son escenarios de decisión narrativa
+             puros, no necesitan foto ni audio nuevo. */
+          theorySteps: [
+            {
+              html: `
+                <h3>1. El reportero de pasillo</h3>
+                <p>El formato "Vox Populi" (la voz del pueblo) es uno de los estilos más virales hoy en día. Consiste en hacer preguntas rápidas e inesperadas a la gente en la calle. Para que funcione, la acústica del entorno es tu mayor enemigo.</p>
+                <ul>
+                  <li><strong>Cuidado con el ruido ambiente:</strong> El timbre del descanso o el bullicio del patio le dan vida a la toma, pero no pueden ahogar la voz de tu entrevistado. Ubícate estratégicamente.</li>
+                  <li><strong>Control del micrófono:</strong> Si entrevistas a un compañero o docente, asegúrate de acercar el teléfono a su boca cuando hable, y regresarlo a la tuya cuando preguntes. Es como un partido de ping-pong sonoro.</li>
+                </ul>
+              `
+            },
+            {
+              html: `
+                <h3>2. La Pregunta Abierta</h3>
+                <p>Nunca hagas preguntas que se respondan con "Sí" o "No". Diseña preguntas que obliguen a la otra persona a contar una mini-historia o dar una opinión fuerte.</p>
+              `
+            },
+            {
+              html: `
+                <h3>Tu turno</h3>
+                <p>Vas a vivir una entrevista completa, paso a paso, desde el primer acercamiento hasta el cierre. En cada momento vas a tener que decidir qué decir.</p>
+              `
+            }
+          ],
           textTasks: [
             {
               instruction: 'Reto 1/5: La misión comienza. Tienes la cámara lista y ves a un compañero. ¿Cómo te acercas para romper el hielo?',
@@ -1941,14 +2003,34 @@
         },
         {
           tabTitle: 'Corte y Limpieza',
-          contentHTML: `
-            <h3>1. Tijera implacable en CapCut</h3>
-            <p>Nadie habla perfecto en la primera toma. Todo el mundo duda, respira fuerte o usa muletillas ("ehhh", "este..."). Aquí es donde ocurre la magia de la edición de audio.</p>
-            <p>Al importar tu clip de audio a CapCut, verás la forma de onda (las montañitas de sonido). Donde la línea es plana, hay silencio. Usa la herramienta de <strong>Dividir</strong> para cortar y eliminar esos baches muertos. Tu objetivo es que la frase fluya con un ritmo dinámico y sin pausas raras.</p>
-
-            <h3>2. Nivelación y Música</h3>
-            <p>Si vas a usar una pista musical de fondo para darle "mood" a tu entrevista, asegúrate de bajarle el volumen dramáticamente (usualmente entre un 10% y un 15%). La música debe acompañar, nunca competir con la voz principal.</p>
-          `,
+          /* Convertido a theorySteps (sep 2026). Se agregó un párrafo
+             corto sobre no cortar de más, que faltaba: el Reto 2 de
+             capcut evalúa justo ese error (corte agresivo que se come la
+             respiración/última sílaba) y la teoría original solo
+             explicaba CÓMO cortar, no la advertencia de no pasarse. Los 5
+             audioTasks se mantienen sin cambios. */
+          theorySteps: [
+            {
+              html: `
+                <h3>1. Tijera implacable en CapCut</h3>
+                <p>Nadie habla perfecto en la primera toma. Todo el mundo duda, respira fuerte o usa muletillas ("ehhh", "este..."). Aquí es donde ocurre la magia de la edición de audio.</p>
+                <p>Al importar tu clip de audio a CapCut, verás la forma de onda (las montañitas de sonido). Donde la línea es plana, hay silencio. Usa la herramienta de <strong>Dividir</strong> para cortar y eliminar esos baches muertos. Tu objetivo es que la frase fluya con un ritmo dinámico y sin pausas raras.</p>
+                <p><strong>Ojo:</strong> no te pases de tijera. Si cortas demasiado pegado a la palabra, te comes la respiración o el final de la frase y suena robótico y cortado. Deja siempre un pelín de aire natural antes y después de cada corte.</p>
+              `
+            },
+            {
+              html: `
+                <h3>2. Nivelación y Música</h3>
+                <p>Si vas a usar una pista musical de fondo para darle "mood" a tu entrevista, asegúrate de bajarle el volumen dramáticamente (usualmente entre un 10% y un 15%). La música debe acompañar, nunca competir con la voz principal.</p>
+              `
+            },
+            {
+              html: `
+                <h3>Tu turno</h3>
+                <p>Vas a escuchar 5 clips ya importados a una línea de tiempo de edición y decidir qué falta arreglar en cada uno, hasta llegar a una mezcla lista para exportar.</p>
+              `
+            }
+          ],
           audioTasks: [
             {
               instruction: 'Reto 1/5: Escucha este audio importado a tu línea de tiempo. ¿Qué problema evidente tiene?',
