@@ -2648,7 +2648,10 @@
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
         });
       } else {
-        card.setAttribute('aria-disabled', 'true');
+        /* aria-disabled se hereda: solo se marca la tarjeta de una fase bloqueada.
+           En una fase que "requiere teoría", el botón "Ver contenido" de adentro
+           sí funciona y no debe anunciarse como deshabilitado. */
+        if(!vs.contentEnabled) card.setAttribute('aria-disabled', 'true');
         card.setAttribute('aria-label', item.name +
           (vs.state === 'locked' ? ' — fase bloqueada' : ' — requiere completar la evaluación'));
       }
@@ -2677,6 +2680,7 @@
       card.style.setProperty('--accent-color', built.vs.hex);
       card.innerHTML = built.html;
       wireContentButton(card, item);
+      if(built.vs.contentEnabled) card.removeAttribute('aria-disabled');
 
       /* the mission click handler may need to be (re)attached now that
          missionEnabled just flipped from false to true */
